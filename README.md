@@ -44,11 +44,11 @@ generator.generate_batch(ai_icons, color='white', size=256)
 
 <div align="center" style="padding: 40px; border-radius: 10px;">
   <img src="./output/claude_white_purple_bg.svg" width="70" alt="Claude">
-  <img src="https://via.placeholder.com/40x1/00000000/00000000?text=" width="40" height="1" alt="">
+  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
   <img src="./output/gemini_white_pink_bg.svg" width="70" alt="Gemini">
-  <img src="https://via.placeholder.com/40x1/00000000/00000000?text=" width="40" height="1" alt="">
+  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
   <img src="./output/mistral_white_gradient_bg.svg" width="70" alt="Mistral">
-  <img src="https://via.placeholder.com/40x1/00000000/00000000?text=" width="40" height="1" alt="">
+  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
   <img src="./output/openai_purple_transparent_bg.svg" width="70" alt="OpenAI">
 </div>
 
