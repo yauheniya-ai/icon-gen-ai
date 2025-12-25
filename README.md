@@ -23,7 +23,7 @@ Generate customizable icons from Iconify with easy export to PNG, SVG, WebP form
 ## Installation
 
 ```bash
-pip install icon-gen
+pip install icon-gen-ai
 ```
 
 ## Quick Start
