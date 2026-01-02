@@ -3,83 +3,146 @@
 import click
 from pathlib import Path
 from .generator import IconGenerator
+from urllib.parse import urlparse
+import os
 
+def is_url(value: str) -> bool:
+    try:
+        parsed = urlparse(value)
+        return parsed.scheme in ("http", "https")
+    except Exception:
+        return False
 
 @click.group()
 def cli():
-    """Icon-gen-ai: AI-powered icon generator from Iconify.
+    """Icon-gen-ai: AI-powered icon generator from Iconify, direct URLs, or local files.
     
     Use 'icon-gen-ai generate' for basic icon generation.
     Use 'icon-gen-ai search' for AI-powered icon discovery.
     """
     pass
 
-
 @cli.command()
-@click.argument('icon_name')
-@click.option('--color', default='white', help='Icon color (e.g., white, #FF0000)')
+@click.argument('icon_name', required=False)
+@click.option('--input', '-i', 'input_file', type=str,
+              help='Local image file or direct URL (PNG, JPG, SVG)')
+@click.option('--color', default='white', help='Icon color (e.g., white, #FF0000, or gradient: "(#FF0000,#00FF00)")')
 @click.option('--size', default=256, help='Icon size in pixels')
 @click.option('--format', 'output_format', default='svg', 
               type=click.Choice(['png', 'svg', 'webp']))
 @click.option('--output', '-o', help='Output file path')
-@click.option('--bg-color', help='Background color (e.g., #8B76E9 or none for transparent)')
+@click.option('--bg-color', help='Background color (e.g., #8B76E9, blue, or gradient: "(#8B76E9,#EA2081)")')
 @click.option('--border-radius', default=0, help='Border radius (0=square, size/2=circle)')
-def generate(icon_name, color, size, output_format, output, bg_color, border_radius):
-    """Generate icons from Iconify.
+def generate(icon_name, input_file, color, size, output_format, output, bg_color, border_radius):
+    """Generate icons from Iconify or local files.
     
     Examples:
     
+        # From Iconify:
         icon-gen-ai generate simple-icons:googlegemini
         
         icon-gen-ai generate simple-icons:openai --color white --size 512
         
-        icon-gen-ai generate mdi:github --bg-color "#8B76E9" --border-radius 20
+        # From direct URL
+        icon-gen-ai generate -i https://upload.wikimedia.org/wikipedia/commons/b/b0/Claude_AI_symbol.svg -o output/claude-icon.svg \
+  --color crimson --bg-color black --border-radius 64 --size 128
         
-        icon-gen-ai generate simple-icons:openai -o my-icon.svg
+        # From local file:
+        icon-gen-ai generate -i input/deepseek-icon.png -o output/deepseek-icon.svg \
+  --color white --bg-color '(#8B76E9,#EA2081)' --border-radius 10 --size 128
+        
     """
-    try:
-        # Initialize generator
-        output_dir = "output" if not output else str(Path(output).parent)
-        generator = IconGenerator(output_dir=output_dir)
-        
-        # Parse background color
-        parsed_bg_color = None
-        if bg_color and bg_color.lower() != 'none':
-            parsed_bg_color = bg_color
-        
-        # Determine output name
-        if output:
-            output_name = Path(output).stem
+    # Resolve input source (local file vs direct URL)
+    direct_url = None
+    local_file = None
+
+    if input_file:
+        if is_url(input_file):
+            direct_url = input_file
         else:
-            output_name = icon_name.replace(':', '_').replace('/', '_')
-        
-        click.echo(f"Generating {icon_name}...")
-        click.echo(f"  Color: {color}")
-        click.echo(f"  Size: {size}px")
-        click.echo(f"  Background: {bg_color or 'transparent'}")
-        click.echo(f"  Border radius: {border_radius}px")
-        
-        # Generate icon
-        result = generator.generate_icon(
-            icon_name=icon_name,
-            output_name=output_name,
-            color=color,
-            size=size,
-            format=output_format,
-            bg_color=parsed_bg_color,
-            border_radius=border_radius
-        )
-        
-        if result:
-            click.echo(f"✓ Success! Saved to: {result}")
-        else:
-            click.echo("✗ Failed to generate icon", err=True)
-            raise click.Abort()
-            
-    except Exception as e:
-        click.echo(f"✗ Error: {e}", err=True)
+            if not os.path.exists(input_file):
+                click.echo(f"✗ Error: Input file does not exist: {input_file}", err=True)
+                raise click.Abort()
+            local_file = input_file
+
+    # Validate input: either icon_name OR input_file must be provided
+    if not icon_name and not input_file:
+        click.echo("✗ Error: Must provide either ICON_NAME or --input/-i option", err=True)
+        click.echo("  Examples:", err=True)
+        click.echo("    icon-gen-ai generate simple-icons:openai", err=True)
+        click.echo("    icon-gen-ai generate -i input/logo.png", err=True)
         raise click.Abort()
 
+    if icon_name and input_file:
+        click.echo("✗ Error: Cannot use both ICON_NAME and --input/-i together", err=True)
+        click.echo("  Use either Iconify icon OR local file, not both", err=True)
+        raise click.Abort()
+        
+    # Initialize generator
+    output_dir = "output" if not output else str(Path(output).parent)
+    generator = IconGenerator(output_dir=output_dir)
+    
+    # Parse background color
+    parsed_bg_color = None
+    if bg_color and bg_color.lower() != 'none':
+        # Check if it's a gradient tuple: (#color1,#color2) or (color1,color2)
+        if bg_color.startswith('(') and bg_color.endswith(')'):
+            colors = bg_color[1:-1].split(',')
+            if len(colors) == 2:
+                parsed_bg_color = (colors[0].strip(), colors[1].strip())
+            else:
+                click.echo("✗ Error: Gradient must have exactly 2 colors: (color1,color2)", err=True)
+                raise click.Abort()
+        else:
+            parsed_bg_color = bg_color
+    
+    # Determine output name
+    if output:
+        output_name = Path(output).stem
+    elif input_file:
+        if is_url(input_file):
+            output_name = Path(urlparse(input_file).path).stem or "icon"
+        else:
+            output_name = Path(input_file).stem
+
+    else:
+        output_name = icon_name.replace(':', '_').replace('/', '_')
+    
+    # Display generation info
+    if input_file:
+        click.echo(f"Converting local file: {input_file}")
+    else:
+        click.echo(f"Generating {icon_name}...")
+    
+    click.echo(f"  Color: {color}")
+    click.echo(f"  Size: {size}px")
+    
+    # Display background info
+    if isinstance(parsed_bg_color, tuple):
+        click.echo(f"  Background: gradient {parsed_bg_color[0]} → {parsed_bg_color[1]}")
+    else:
+        click.echo(f"  Background: {bg_color or 'transparent'}")
+    
+    click.echo(f"  Border radius: {border_radius}px")
+    
+    # Generate icon
+    result = generator.generate_icon(
+        icon_name=icon_name,
+        output_name=output_name,
+        color=color,
+        size=size,
+        format=output_format,
+        bg_color=parsed_bg_color,
+        border_radius=border_radius,
+        local_file=local_file,
+        direct_url=direct_url,
+    )
+    
+    if result:
+        click.echo(f"✓ Success! Saved to: {result}")
+    else:
+        click.echo("✗ Failed to generate icon", err=True)
+        raise click.Abort()
 
 @cli.command()
 @click.argument('query')
@@ -239,6 +302,7 @@ def main(icon_name, color, size, output_format, output, bg_color, border_radius)
     ctx.invoke(
         generate,
         icon_name=icon_name,
+        input_file=None,
         color=color,
         size=size,
         output_format=output_format,
