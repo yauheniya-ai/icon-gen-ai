@@ -19,6 +19,12 @@
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 10px 40px rgba(0,0,0,.4);
+      background: #000;
+    }
+    .demo-svg {
+      width: 100%;
+      height: auto;
+      display: block;
     }
     code {
       background: #1e1e24;
@@ -26,6 +32,26 @@
       border-radius: 6px;
     }
     a { color: #8b76e9; text-decoration: none; }
+    pre {
+      font-size: 0.7rem;
+      line-height: 1.5;
+      padding: 1rem;
+      padding-top: 0rem;
+      background: #16161d;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    pre code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .icon-links {
+      margin-top: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+    }
+
   </style>
 </head>
 <body>
@@ -36,39 +62,28 @@
 </p>
 
 <div class="demo">
-  <object type="image/svg+xml" data="demo.svg"></object>
+  <img src="demo.svg" alt="CLI demo" class="demo-svg" />
 </div>
-
-<h2>Install</h2>
-<pre><code>pip install icon-gen-ai</code></pre>
 
 <h2>Try it</h2>
 <pre><code>
 pip install icon-gen-ai
-
 icon-gen-ai generate -i input/pypi-icon.svg -o output/pypi-icon.svg --bg-color '(tan,cyan)' --size 128 --border-radius 64 
-
 pip install icon-gen-ai[ai]
-
-export OPENAI_API_KEY=sk-proj-...
-
+[ -f .env ] && echo ".env exists" || echo ".env doesn't exist, alternative: export OPENAI_API_KEY=sk-proj-..."
 icon-gen-ai providers
-
 icon-gen-ai search "GitHub logo and icons"
-
-icon-gen-ai generate simple-icons:github -o output/github-icon.svg --bg-color '(#8B76E9,#EA2081)' --color black --size 128 --border-radius 64
+icon-gen-ai generate simple-icons:github -o output/github-icon.svg --bg-color '(#8b76e9,#ea2081)' --color black --size 128 --border-radius 64
 </code></pre>
 
-<p style="margin-top: 32px;">
+<p class="icon-links">
   <a href="https://github.com/yauheniya-ai/icon-gen-ai">
-    <img src="github-icon.svg" alt="GitHub" width="32" height="32" style="margin-right: 16px;">
-  </a> 
+    <img src="github-icon.svg" alt="GitHub" width="32" height="32">
+  </a>
   <a href="https://pypi.org/project/icon-gen-ai/">
     <img src="pypi-icon.svg" alt="PyPI" width="32" height="32">
   </a>
 </p>
-
-
 
 </body>
 </html>
