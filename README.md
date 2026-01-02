@@ -54,13 +54,13 @@ generator.generate_batch(ai_icons, color='white', size=256)
 ## Example Output
 
 <div align="center" style="padding: 40px; border-radius: 10px;">
-  <img src="./output/claude_white_purple_bg.svg" width="70" alt="Claude">
+  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/claude_white_purple_bg.svg" width="70" alt="Claude">
   <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
-  <img src="./output/gemini_white_pink_bg.svg" width="70" alt="Gemini">
+  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/gemini_white_pink_bg.svg" width="70" alt="Gemini">
   <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
-  <img src="./output/mistral_white_gradient_bg.svg" width="70" alt="Mistral">
+  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/mistral_white_gradient_bg.svg" width="70" alt="Mistral">
   <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
-  <img src="./output/openai_gradient_transparent_bg.svg" width="70" alt="OpenAI">
+  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/openai_gradient_transparent_bg.svg" width="70" alt="OpenAI">
 </div>
 
 ## Finding Icons
