@@ -248,8 +248,7 @@ class IconGenerator:
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(svg_content, encoding="utf-8")
-            print(f"✓ Saved: {output_path}")
-            return True
+            return output_path
         except Exception as e:
             print(f"Error saving {output_path}: {e}")
             return False

@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/yauheniya-ai/icon-gen)
-[![Coverage](https://img.shields.io/badge/coverage-48%25-yellow.svg)](https://github.com/yauheniya-ai/icon-gen)
+[![Coverage](https://img.shields.io/badge/coverage-63%25-yellow.svg)](https://github.com/yauheniya-ai/icon-gen)
 [![PyPI version](https://img.shields.io/pypi/v/icon-gen-ai?color=blue&label=PyPI)](https://pypi.org/project/icon-gen-ai/)
 [![TestPyPI version](https://img.shields.io/pypi/v/icon-gen-ai?color=orange&label=TestPyPI)](https://test.pypi.org/project/icon-gen-ai/)
 [![GitHub last commit](https://img.shields.io/github/last-commit/yauheniya-ai/icon-gen)](https://github.com/yauheniya-ai/icon-gen/commits/main)
@@ -13,17 +13,22 @@ Generate customizable icons from Iconify with easy export to PNG, SVG, WebP form
 ## Features
 
 - Access 200,000+ icons from Iconify
-- Customize colors and sizes
-- Custom backgrounds
+- Customize colors, sizes, and backgrounds
+- Gradient color option for icons and backgrounds
 - Adjustable border radius
-- Export to SVG format
-- Simple and intuitive API
-- CLI and Python API
+- Export to SVG, PNG, or WEBP format
+- Simple and intuitive CLI and Python API
+- AI-assisted icon search and generation
 
 ## Installation
 
 ```bash
 pip install icon-gen-ai
+```
+
+**(Optional) AI features**: 
+```bash
+pip install icon-gen-ai[ai]
 ```
 
 ## Quick Start
@@ -72,20 +77,25 @@ Icon naming format: `collection:icon-name`
 
 Check out the `examples/` directory for more use cases:
 - `generate_ai_icons.py` - Generate AI model icons (Claude, OpenAI, Gemini)
+- `generate_ai_icons_on_bg.py` - Generate icons on different backgrounds
 - `generate_judge_icon.py` - Generate legal/law icons
+- `ai_simple_usage.py` - Use natural language to search and generate icons
+- `ai_icon_search.py` - Use natural language to search and generate icons with custom style
+
 
 ## Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/yauheniya-ai/icon-gen.git
-cd icon-gen
+git clone https://github.com/yauheniya-ai/icon-gen-ai.git
+cd icon-gen-ai
 
 # Install all dependencies (including dev tools)
 uv sync
+uv sync --extra ai
 
 # Run tests
-uv run pytest
+uv run pytest --cov=src --cov-report=term-missing
 ```
 
 ## License
