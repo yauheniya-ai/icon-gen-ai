@@ -8,7 +8,7 @@
 [![TestPyPI version](https://img.shields.io/pypi/v/icon-gen-ai?color=orange&label=TestPyPI)](https://test.pypi.org/project/icon-gen-ai/)
 [![GitHub last commit](https://img.shields.io/github/last-commit/yauheniya-ai/icon-gen)](https://github.com/yauheniya-ai/icon-gen/commits/main)
 
-Generate customizable icons from Iconify with easy export to PNG, SVG, WebP formats.
+Generate customizable icons from Iconify, direct URLs, or local files with easy export to PNG, SVG, WebP formats.
 
 ## Features
 
