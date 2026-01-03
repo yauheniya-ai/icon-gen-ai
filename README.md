@@ -11,7 +11,7 @@
 Generate customizable icons from Iconify, direct URLs, or local files with easy export to PNG, SVG, WebP formats.
 
 <div align="center" style="padding: 40px; ">
-  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/docs/demo.svg" width="700" alt="CLI Demo">
+  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/docs/demo.svg" width="100%" alt="CLI Demo">
 </div>
 
 ## Features
