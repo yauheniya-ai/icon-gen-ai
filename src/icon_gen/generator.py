@@ -111,9 +111,26 @@ class IconGenerator:
         """Recolor multi-color SVG to single color using raster method."""
         if not RASTER_AVAILABLE:
             print("Cannot recolor SVG: PIL/cairosvg not installed")
+            print("Install with: pip install Pillow cairosvg")
             return svg_content
         
         try:
+            # Parse target color
+            if target_color.startswith('#'):
+                target_rgb = tuple(int(target_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+            else:
+                color_map = {
+                    'red': (255,0,0), 'green': (0,255,0), 'blue': (0,0,255),
+                    'yellow': (255,255,0), 'cyan': (0,255,255), 'magenta': (255,0,255),
+                    'white': (255,255,255), 'black': (0,0,0),
+                    'gray': (128,128,128), 'grey': (128,128,128),
+                    'orange': (255,165,0), 'purple': (128,0,128), 'pink': (255,192,203),
+                    'brown': (165,42,42), 'lime': (0,255,0), 'navy': (0,0,128),
+                    'teal': (0,128,128), 'olive': (128,128,0), 'maroon': (128,0,0),
+                    'crimson': (220,20,60), 'indigo': (75,0,130), 'violet': (238,130,238),
+                }
+                target_rgb = color_map.get(target_color.lower(), (255,255,255))
+            
             # Convert SVG to PNG
             png_data = cairosvg.svg2png(
                 bytestring=svg_content.encode('utf-8'),
@@ -125,23 +142,11 @@ class IconGenerator:
             img = Image.open(BytesIO(png_data)).convert("RGBA")
             width, height = img.size
             
-            # Parse target color
-            if target_color.startswith('#'):
-                target_rgb = tuple(int(target_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-            else:
-                color_map = {
-                    'red': (255,0,0), 'green': (0,255,0), 'blue': (0,0,255),
-                    'yellow': (255,255,0), 'cyan': (0,255,255), 'magenta': (255,0,255),
-                    'white': (255,255,255), 'black': (0,0,0),
-                    'gray': (128,128,128), 'grey': (128,128,128),
-                }
-                target_rgb = color_map.get(target_color.lower(), (255,255,255))
-            
             # Recolor all non-transparent pixels
             pixels = list(img.getdata())
             new_pixels = []
             for r, g, b, a in pixels:
-                if a > 0:
+                if a > 0:  # Non-transparent pixel
                     new_pixels.append((*target_rgb, a))
                 else:
                     new_pixels.append((r, g, b, a))
@@ -216,38 +221,48 @@ class IconGenerator:
         If color is a tuple, applies gradient.
         If color is a string, recolors all non-transparent pixels to that color.
         """
-        # If no color specified, just apply size
-        if color is None:
-            try:
-                root = ET.fromstring(svg_content)
-                
-                # Ensure viewBox exists
-                if not root.get("viewBox"):
-                    w = re.sub(r"[^\d.]", "", root.get("width", "24"))
-                    h = re.sub(r"[^\d.]", "", root.get("height", "24"))
-                    root.set("viewBox", f"0 0 {w} {h}")
+        try:
+            # If no color specified, just apply size
+            if color is None:
+                try:
+                    root = ET.fromstring(svg_content)
+                    
+                    # Ensure viewBox exists
+                    if not root.get("viewBox"):
+                        w = re.sub(r"[^\d.]", "", root.get("width", "24"))
+                        h = re.sub(r"[^\d.]", "", root.get("height", "24"))
+                        root.set("viewBox", f"0 0 {w} {h}")
 
-                # Apply size only
-                if size:
-                    root.set("width", str(size))
-                    root.set("height", str(size))
+                    # Apply size only
+                    if size:
+                        root.set("width", str(size))
+                        root.set("height", str(size))
 
-                return ET.tostring(root, encoding="unicode")
-            except Exception as e:
-                print(f"Warning: Could not modify SVG: {e}")
-                return svg_content
+                    return ET.tostring(root, encoding="unicode")
+                except Exception as e:
+                    print(f"Warning: Could not modify SVG: {e}")
+                    return svg_content
+            
+            # Handle gradient colors - always use raster method
+            if isinstance(color, tuple):
+                return self.apply_gradient_via_raster(svg_content, color[0], color[1], size or 256)
+            
+            # For solid colors, use raster method for reliable multi-color recoloring
+            if color:
+                return self.recolor_svg_to_single_color(svg_content, color, size or 256)
         
-        # Handle gradient colors - always use raster method
-        if isinstance(color, tuple):
-            return self.apply_gradient_via_raster(svg_content, color[0], color[1], size or 256)
-        
-        # For solid colors, use raster method for reliable multi-color recoloring
-        if color:
-            return self.recolor_svg_to_single_color(svg_content, color, size or 256)
+        except Exception as e:
+            print(f"Warning: Could not modify SVG: {e}")
+            return svg_content
 
     # -------------------- LOCAL FILE --------------------
-    def load_local_file(self, file_path: str) -> Optional[str]:
-        """Load local image file. Returns SVG content unchanged."""
+    def load_local_file(self, file_path: str, target_color: Optional[str] = None, target_size: Optional[int] = None) -> Optional[tuple[str, bool]]:
+        """Load local image file. Returns (svg_content, is_raster_image).
+        
+        For raster images, if target_color is provided, recolors during load.
+        If target_size is provided, resizes the image.
+        Returns a tuple: (svg_content, is_raster_image)
+        """
         file_path = Path(file_path)
         if not file_path.exists():
             print(f"Error: File not found: {file_path}")
@@ -255,7 +270,8 @@ class IconGenerator:
 
         if file_path.suffix.lower() == '.svg':
             try:
-                return file_path.read_text(encoding='utf-8')
+                svg_content = file_path.read_text(encoding='utf-8')
+                return (svg_content, False)  # Not a raster image
             except Exception as e:
                 print(f"Error reading SVG file {file_path}: {e}")
                 return None
@@ -266,16 +282,49 @@ class IconGenerator:
 
         try:
             img = Image.open(file_path).convert("RGBA")
+            
+            # Resize if requested
+            if target_size:
+                img = img.resize((target_size, target_size), Image.Resampling.LANCZOS)
+            
             width, height = img.size
+            
+            # Apply color transformation if requested
+            if target_color:
+                # Parse target color
+                if target_color.startswith('#'):
+                    target_rgb = tuple(int(target_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+                else:
+                    color_map = {
+                        'red': (255,0,0), 'green': (0,255,0), 'blue': (0,0,255),
+                        'yellow': (255,255,0), 'cyan': (0,255,255), 'magenta': (255,0,255),
+                        'white': (255,255,255), 'black': (0,0,0),
+                        'gray': (128,128,128), 'grey': (128,128,128),
+                        'orange': (255,165,0), 'purple': (128,0,128), 'pink': (255,192,203),
+                        'brown': (165,42,42), 'lime': (0,255,0), 'navy': (0,0,128),
+                        'teal': (0,128,128), 'olive': (128,128,0), 'maroon': (128,0,0),
+                        'crimson': (220,20,60), 'indigo': (75,0,130), 'violet': (238,130,238),
+                    }
+                    target_rgb = color_map.get(target_color.lower(), (255,255,255))
+                
+                # Recolor non-transparent pixels
+                pixels = list(img.getdata())
+                new_pixels = []
+                for r, g, b, a in pixels:
+                    if a > 0:  # Non-transparent pixel
+                        new_pixels.append((*target_rgb, a))
+                    else:
+                        new_pixels.append((r, g, b, a))
+                
+                img.putdata(new_pixels)
 
             from base64 import b64encode
             buffer = BytesIO()
             img.save(buffer, format='PNG')
             img_data = b64encode(buffer.getvalue()).decode('utf-8')
 
-            svg_header = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">\n'
-            svg_content = f'<image width="{width}" height="{height}" href="data:image/png;base64,{img_data}" />\n</svg>'
-            return svg_content
+            svg_content = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">\n<image width="{width}" height="{height}" href="data:image/png;base64,{img_data}" />\n</svg>'
+            return (svg_content, True)  # Is a raster image
 
         except Exception as e:
             print(f"Error converting {file_path} to SVG: {e}")
@@ -325,9 +374,18 @@ class IconGenerator:
         local_file: Optional[str] = None,
     ) -> Optional[Path]:
         size = size or 256
+        is_raster_source = False
 
         if local_file:
-            svg_content = self.load_local_file(local_file)
+            # Pass size to load_local_file for proper resizing of raster images
+            result = self.load_local_file(
+                local_file, 
+                color if color and not isinstance(color, tuple) else None,
+                size
+            )
+            if result is None:
+                return None
+            svg_content, is_raster_source = result
         elif direct_url:
             svg_content = self.get_icon_from_url(direct_url)
         elif icon_name:
@@ -340,8 +398,10 @@ class IconGenerator:
         if not svg_content:
             return None
 
-        # Apply color and size modifications (only if color is specified)
-        svg_content = self.modify_svg(svg_content, color, size)
+        # Apply color and size modifications
+        # For raster sources, color and size are already applied during load
+        if not is_raster_source:
+            svg_content = self.modify_svg(svg_content, color, size)
 
         if bg_color is not None or border_radius > 0:
             svg_content = self.wrap_with_background(svg_content, size, bg_color, border_radius)
