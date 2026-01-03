@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://img.shields.io/pypi/v/icon-gen-ai?color=blue&label=PyPI)](https://pypi.org/project/icon-gen-ai/)
 [![TestPyPI version](https://img.shields.io/pypi/v/icon-gen-ai?color=orange&label=TestPyPI)](https://test.pypi.org/project/icon-gen-ai/)
-[![Coverage](https://img.shields.io/badge/coverage-63%25-yellow.svg)](https://github.com/yauheniya-ai/icon-gen)
+[![Coverage](https://img.shields.io/badge/coverage-63%25-yellow.svg)](https://github.com/yauheniya-ai/icon-gen-ai)
 [![GitHub last commit](https://img.shields.io/github/last-commit/yauheniya-ai/icon-gen)](https://github.com/yauheniya-ai/icon-gen/commits/main)
 [![Downloads](https://pepy.tech/badge/icon-gen-ai)](https://pepy.tech/project/icon-gen-ai)
 
@@ -12,6 +12,9 @@ Generate customizable icons from Iconify, direct URLs, or local files with easy 
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/docs/demo.svg" width="100%" alt="CLI Demo">
+  <br><sub>
+    <a href="https://yauheniya-ai.github.io/icon-gen-ai/">View CLI Usage Examples</a>
+  </sub>
 </div>
 
 ## Features
@@ -92,7 +95,6 @@ generator.generate_icon(
     bg_color=None,
     size=256
 )
-
 ```
 
 ### Generate Multiple Icons (Batch)
@@ -175,7 +177,6 @@ Check out the `examples/` directory for more use cases:
 **AI-Powered Search** (requires `pip install icon-gen-ai[ai]`):
 - `ai_simple_usage.py` - Search and generate icons using natural language
 - `ai_icon_search.py` - Advanced search with custom styles and project context
-
 
 ## Development
 
