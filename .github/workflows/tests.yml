@@ -5,9 +5,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-    - run: pip install pytest coverage
-    - run: coverage run -m pytest
-    - run: coverage report
+    
+    - name: Install dependencies
+      run: |
+        pip install -e .[dev]  # Installs your package + dev deps (pytest, coverage, etc.)
+    
+    - name: Run tests with coverage
+      run: |
+        coverage run -m pytest
+        coverage report
