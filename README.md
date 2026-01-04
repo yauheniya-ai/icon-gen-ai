@@ -136,7 +136,7 @@ generator.generate_batch(ai_icons, color='deepskyblue', size=256, outline_color=
 When you apply a solid color to an animated SVG icon, the animations are automatically preserved:
 
 <div align="center" style="padding: 40px; ">
-  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/bars_scale_middle_mediumslateblue.svg" width="70" alt="bars scale middle">
+  <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/bars_scale_mediumslateblue.svg" width="70" alt="bars scale">
   <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
   <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/my_location_loop_mediumslateblue.svg" width="70" alt="my location loop">
   <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" width="40" height="1" alt="">
