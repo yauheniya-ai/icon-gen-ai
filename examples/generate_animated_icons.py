@@ -39,7 +39,7 @@ def main():
         animated_icons, 
         color=color, 
         size=size, 
-        outline_color='deeppink', 
+        outline_color='springgreen', 
         bg_color='snow', 
         outline_width=8, 
         border_radius=48)

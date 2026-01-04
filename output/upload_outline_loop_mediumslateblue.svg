@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
 
-  <rect x="4.0" y="4.0" width="248" height="248" rx="44.0" ry="44.0" fill="snow" stroke="deeppink" stroke-width="8" />
+  <rect x="4.0" y="4.0" width="248" height="248" rx="44.0" ry="44.0" fill="snow" stroke="springgreen" stroke-width="8" />
   <g transform="translate(128.0,128.0) scale(7.466666666666666) translate(-12.0,-12.0)">
 <ns0:g xmlns:ns0="http://www.w3.org/2000/svg" fill="none" stroke="mediumslateblue" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><ns0:path stroke-dasharray="20" d="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5" fill="mediumslateblue"><ns0:animate attributeName="d" dur="1.5s" keyTimes="0;0.5;1" repeatCount="indefinite" values="M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5;M12 15h2v-3h2.5l-4.5 -4.5M12 15h-2v-3h-2.5l4.5 -4.5;M12 15h2v-6h2.5l-4.5 -4.5M12 15h-2v-6h-2.5l4.5 -4.5" /><ns0:animate fill="freeze" attributeName="stroke-dashoffset" dur="0.5s" values="20;0" /></ns0:path><ns0:path stroke-dasharray="14" stroke-dashoffset="14" d="M6 19h12" fill="mediumslateblue"><ns0:animate fill="freeze" attributeName="stroke-dashoffset" begin="0.5s" dur="0.2s" to="0" /></ns0:path></ns0:g>
   </g>
