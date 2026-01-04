@@ -6,16 +6,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      
     - name: Install dependencies
-      run: |
-        pip install -e .[dev]  # Installs your package + dev deps (pytest, coverage, etc.)
-    
+      run: uv sync --extra ai --dev  # ✅ dev + ai extras
+      
     - name: Run tests with coverage
-      run: |
-        coverage run -m pytest
-        coverage report
+      run: uv run pytest --cov=src --cov-report=term-missing

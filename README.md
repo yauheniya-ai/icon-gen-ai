@@ -187,7 +187,7 @@ cd icon-gen-ai
 
 # Install all dependencies (including dev tools)
 uv sync
-uv sync --extra ai
+uv sync --extra ai --dev
 
 # Run tests
 uv run pytest --cov=src --cov-report=term-missing
