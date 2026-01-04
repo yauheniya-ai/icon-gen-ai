@@ -160,7 +160,7 @@ animated_icons = {
     f'bars_scale_middle_{color}': 'svg-spinners:bars-scale-middle'
 }
 
-generator.generate_batch(ai_icons, color=color, size=256, outline_color='springgreen', bg_color='snow', outline_width=8, border_radius=48)
+generator.generate_batch(animated_icons, color=color, size=256, outline_color='springgreen', bg_color='snow', outline_width=8, border_radius=48)
 ```
 
 **What preserves animations:**
