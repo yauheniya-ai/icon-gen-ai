@@ -1,5 +1,26 @@
 # icon-gen-ai – Changelog
 
+## 0.6.0 (2026-04-11)
+
+### Feature
+- **Generator: Radial gradient direction** - Passing `direction="radial"` or `bg_direction="radial"` renders a center-out radial gradient instead of a linear one. Color 1 appears at the center and color 2 at the edges
+  - For SVG output, uses a native `<radialGradient>` element (`cx="50%" cy="50%" r="50%"`) — zero rasterisation, fully scalable
+  - For PNG/WebP icon-colour gradients, uses a per-pixel distance computation: `ratio = distance(pixel, center) / distance(corner, center)`, giving a smooth center-to-edge blend that matches the SVG rendering exactly
+  - Works for both icon colour (`color=(c1, c2)` + `direction="radial"`) and background colour (`bg_color=(c1, c2)` + `bg_direction="radial"`)
+  - Compatible with all existing features: solid/gradient backgrounds, transparent cutout, outline, border radius, animation, and batch generation
+- **Example: `examples/generate_gradient_icons.py`** - Updated to showcase all four gradient directions (horizontal, vertical, diagonal, radial) for both icon colour and background colour
+
+## 0.5.0 (2026-04-11)
+
+### Feature
+- **Generator: Transparent cutout icon color** - Passing `color="transparent"` together with a background now punches the icon silhouette as a transparent hole through the background. The area covered by the icon becomes see-through while the rest of the background is preserved, enabling negative-space / sticker-style badge designs
+  - Works for SVG output via an SVG `<mask>` with icon fills forced to black (compatible with all SVG renderers)
+  - Works for PNG/WebP output via PIL compositing: background and icon are rasterized separately, then `new_alpha = bg_alpha × (1 − icon_alpha)` is applied — bypasses `cairosvg`'s lack of `<mask>` support entirely
+  - Gradient, solid, and rounded/circle backgrounds all supported
+  - Outline (`outline_width` / `outline_color`) works alongside cutout
+  - `parse_color` no longer raises for `"transparent"` / `"none"` inputs
+- **Example: `examples/generate_transparent_icon.py`** - Demonstrates all cutout variants: solid background, gradient background, circular badge with outline, and single-icon PNG export
+
 ## 0.4.11 (2026-04-11)
 
 ### Frontend
@@ -11,7 +32,7 @@
 ### Backend / Generator
 
 ### Fixed
-- **Generator: `transparent` accepted as icon color** - Passing `color="transparent"` (or `"none"`) now correctly makes icon paths invisible (`fill="none"`, `stroke="none"`) in the SVG-native path; the raster recolor path erases all visible pixels when the target color is transparent; the Iconify API fetch uses `"black"` as an intermediate color so the SVG is retrieved correctly before transparency is applied; `parse_color` no longer raises on `"transparent"`/`"none"` inputs
+- **Generator: `transparent` icon color = background cutout** - When `color="transparent"` is used together with a background, the icon shape now punches a transparent hole through the background (the background is visible everywhere *except* in the icon shape, where the canvas behind shows through). Implemented via an SVG `<mask>` + `feColorMatrix` filter that maps all icon pixel colours to black so the mask works regardless of the icon's original fills. The icon is fetched with its original colours preserved; the cutout is applied at the compositing stage only. `parse_color` no longer raises on `"transparent"`/`"none"` inputs; the raster recolor path also handles transparent correctly (erases all visible pixels)
 
 ## 0.4.10
 

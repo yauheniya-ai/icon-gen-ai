@@ -28,7 +28,7 @@ def simple_example():
         generator.generate_icon(
             icon_name=suggestion.icon_name,
             output_name=suggestion.icon_name.replace(':', '_'),
-            color='white',
+            color='transparent',
             size=256,
             bg_color='#6366f1',
             border_radius=20

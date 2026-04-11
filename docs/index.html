@@ -486,7 +486,7 @@ gen.generate_icon(
       <h3>Gradients</h3>
       <p>
         You can apply gradients to your icons by passing a tuple of two colors to the <code>color</code> or <code>bg_color</code> parameters. 
-        The <code>direction</code> and <code>bg_direction</code> options let you control the orientation of the gradient: <code>horizontal</code> (default), <code>vertical</code>, or <code>diagonal</code>.      
+        The <code>direction</code> and <code>bg_direction</code> options let you control the orientation of the gradient: <code>horizontal</code> (default), <code>vertical</code>, <code>diagonal</code>, or <code>radial</code> (center-out).
       </p>
       <pre class="cmd"><code class="language-python">from icon_gen_ai import IconGenerator
 
@@ -531,6 +531,26 @@ gen.generate_icon(
     bg_color=("lime", "white"), 
     bg_direction="vertical", 
     size=size, 
+    border_radius=border_radius
+)
+
+# Radial gradient icon (center-out)
+gen.generate_icon(
+    icon_name="ph:star-bold",
+    color=("deeppink", "deepskyblue"),
+    direction="radial",
+    bg_color="#1a1a2e",
+    size=size,
+    border_radius=border_radius
+)
+
+# Radial gradient background
+gen.generate_icon(
+    icon_name="ph:fire-bold",
+    color="white",
+    bg_color=("deeppink", "deepskyblue"),
+    bg_direction="radial",
+    size=size,
     border_radius=border_radius
 )</code></pre>
       <div class="icon-row">

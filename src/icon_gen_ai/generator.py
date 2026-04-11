@@ -46,6 +46,13 @@ class IconGenerator:
         color2: str,
         direction: str = "horizontal",
     ) -> str:
+        if direction == "radial":
+            return f"""<defs>
+  <radialGradient id="{gradient_id}" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+    <stop offset="0%" stop-color="{color1}" stop-opacity="1" />
+    <stop offset="100%" stop-color="{color2}" stop-opacity="1" />
+  </radialGradient>
+</defs>"""
         if direction == "vertical":
             x1, y1, x2, y2 = "0%", "0%", "0%", "100%"
         elif direction == "diagonal":
@@ -93,6 +100,10 @@ class IconGenerator:
                             ratio = y / (height - 1) if height > 1 else 0
                         elif direction == "diagonal":
                             ratio = (x + y) / (width + height - 2) if (width + height) > 2 else 0
+                        elif direction == "radial":
+                            cx, cy = (width - 1) / 2, (height - 1) / 2
+                            max_r = ((cx ** 2 + cy ** 2) ** 0.5) or 1
+                            ratio = min(((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 / max_r, 1.0)
                         else:  # horizontal
                             ratio = x / (width - 1) if width > 1 else 0
                         new_r = int(left_rgb[0] * (1 - ratio) + right_rgb[0] * ratio)
@@ -181,6 +192,47 @@ class IconGenerator:
             return svg_content
 
     # -------------------- BACKGROUND --------------------
+    def _elements_forced_black(self, icon_elements_str: str) -> str:
+        """Return icon elements with every fill/stroke forced to black.
+
+        Used to build the cutout mask without depending on SVG filter support
+        (cairosvg does not implement feColorMatrix).
+        """
+        try:
+            # Parse as a fragment by wrapping in a temporary root
+            wrapped = f"<_root>{icon_elements_str}</_root>"
+            root = ET.fromstring(wrapped)
+
+            def force_black(el):
+                tag = el.tag.split('}')[-1] if '}' in el.tag else el.tag
+                # Skip animation / meta elements
+                if tag in ('animate', 'animateTransform', 'animateMotion', 'set', 'style', 'defs'):
+                    return
+                # Strip colour-related inline styles so they don't override fill attr
+                if el.get('style'):
+                    style = re.sub(r'fill\s*:[^;]+;?', 'fill:black;', el.get('style'))
+                    style = re.sub(r'stroke\s*:[^;]+;?', 'stroke:black;', style)
+                    el.set('style', style.strip())
+                # Force fill to black unless explicitly none
+                fill = el.get('fill', '')
+                if fill.lower() not in ('none', ''):
+                    el.set('fill', 'black')
+                elif not fill:  # no fill attr at all — set explicitly for non-group elements
+                    if tag not in ('g', 'svg'):
+                        el.set('fill', 'black')
+                # Force stroke to black unless explicitly none
+                stroke = el.get('stroke', '')
+                if stroke and stroke.lower() != 'none':
+                    el.set('stroke', 'black')
+                for child in el:
+                    force_black(child)
+
+            force_black(root)
+            return ''.join(ET.tostring(child, encoding='unicode') for child in root)
+        except Exception:
+            # Fallback: just return the original (mask will still punch using alpha)
+            return icon_elements_str
+
     def wrap_with_background(
         self,
         svg_content: str,
@@ -191,8 +243,14 @@ class IconGenerator:
         outline_color: Optional[str] = None,
         bg_direction: str = "horizontal",
         scale: float = 0.7,
+        cutout: bool = False,
     ) -> str:
-        """Wrap SVG icon with a background and optional outline."""
+        """Wrap SVG icon with a background and optional outline.
+
+        When *cutout* is True the icon shape punches a transparent hole through
+        the background so that whatever is behind the final image shows through
+        in the shape of the icon.
+        """
         try:
             root = ET.fromstring(svg_content)
             vb = root.get("viewBox", "0 0 24 24").split()
@@ -234,6 +292,44 @@ class IconGenerator:
         icon_scale = size / max(vb_w, vb_h) * scale
         tx = size / 2
         ty = size / 2
+
+        if cutout:
+            # Build a unified <defs> block with gradient (if any) + cutout mask.
+            # We force all icon fills to black directly in the mask elements so that
+            # the mask works in every renderer including cairosvg, which does NOT
+            # support SVG <filter>/feColorMatrix inside masks.
+            gradient_inner = (
+                gradient_def
+                .replace("<defs>", "")
+                .replace("</defs>", "")
+                .strip()
+            )
+            icon_transform = (
+                f"translate({tx},{ty}) "
+                f"scale({icon_scale}) "
+                f"translate({-(vb_x + vb_w / 2)},{-(vb_y + vb_h / 2)})"
+            )
+            black_elements = self._elements_forced_black(icon_elements)
+            return f"""<svg xmlns="http://www.w3.org/2000/svg"
+     width="{size}" height="{size}"
+     viewBox="0 0 {size} {size}">
+  <defs>
+    {gradient_inner}
+    <mask id="cutoutMask">
+      <!-- White = keep background visible -->
+      <rect width="{size}" height="{size}" fill="white"/>
+      <!-- Icon fills forced to black = cut out (make transparent) -->
+      <g transform="{icon_transform}">
+{black_elements}
+      </g>
+    </mask>
+  </defs>
+  <rect x="{half_stroke}" y="{half_stroke}"
+        width="{rect_size}" height="{rect_size}"
+        rx="{rect_radius}" ry="{rect_radius}"
+        fill="{bg_fill}"{outline_attrs}
+        mask="url(#cutoutMask)" />
+</svg>"""
 
         return f"""<svg xmlns="http://www.w3.org/2000/svg"
      width="{size}" height="{size}"
@@ -632,6 +728,11 @@ class IconGenerator:
         # Default: 0.7 (70%) if bg is present, 1.0 (100%) if no bg
         has_background = (bg_color is not None or border_radius > 0 or outline_width > 0)
         effective_scale = scale if scale is not None else (0.7 if has_background else 1.0)
+        is_cutout = (
+            isinstance(color, str)
+            and color.strip().lower() in ('transparent', 'none')
+            and has_background
+        )
 
         if local_file:
             # Check if it's a JPEG and color is requested
@@ -646,7 +747,8 @@ class IconGenerator:
                 return None
             
             # Don't pass gradient colors to load_local_file - it only handles solid colors
-            solid_color = color if color and not isinstance(color, tuple) else None
+            # Also don't pass transparent/cutout color - we handle that at the wrapping stage
+            solid_color = color if (color and not isinstance(color, tuple) and not is_cutout) else None
             result = self.load_local_file(local_file, solid_color, size)
             if result is None:
                 return None
@@ -695,10 +797,12 @@ class IconGenerator:
         # Apply color + size + scale transformations
         # For raster sources, only apply scale if no background (color already applied during load)
         # For vector sources, apply color, size, and scale if no background
+        effective_color = None if is_cutout else color
+
         if not is_raster_source:
             svg_content = self.modify_svg(
                 svg_content,
-                color,
+                effective_color,
                 size,
                 preserve_animations=True,
                 direction=direction,
@@ -734,6 +838,7 @@ class IconGenerator:
                 outline_color,
                 bg_direction=bg_direction,
                 scale=effective_scale,
+                cutout=is_cutout,
             )
 
         if output_name is None:
@@ -758,13 +863,57 @@ class IconGenerator:
             if not RASTER_AVAILABLE:
                 print("Error: PIL/cairosvg not available. Cannot generate raster formats.")
                 return None
-            
-            # Convert SVG to PNG bytes
-            png_bytes = cairosvg.svg2png(
-                bytestring=svg_content.encode('utf-8'), 
-                output_width=size, 
-                output_height=size
-            )
+
+            # For cutout mode cairosvg does not reliably render SVG <mask> elements,
+            # so we composite manually with PIL:
+            #   1. rasterize the background rect (no icon)
+            #   2. rasterize the icon at the same position (transparent background)
+            #   3. new_alpha = bg_alpha * (1 - icon_alpha/255)  →  icon punches a hole
+            if is_cutout:
+                from PIL import ImageChops, ImageOps
+
+                # Icon centred/scaled the same way as in the background composite,
+                # but rendered on a transparent canvas
+                icon_positioned_svg = self.wrap_with_background(
+                    svg_before_bg, size,
+                    bg_color=None, border_radius=0, outline_width=0,
+                    scale=effective_scale, cutout=False,
+                )
+                # Background-only SVG: use a 1 px transparent placeholder icon so
+                # the rect geometry (border-radius, outline, gradient) is identical
+                bg_only_svg = self.wrap_with_background(
+                    '<svg xmlns="http://www.w3.org/2000/svg" '
+                    'viewBox="0 0 1 1" width="1" height="1"/>',
+                    size, bg_color, border_radius, outline_width, outline_color,
+                    bg_direction=bg_direction, scale=effective_scale, cutout=False,
+                )
+                icon_bytes_raw = cairosvg.svg2png(
+                    bytestring=icon_positioned_svg.encode('utf-8'),
+                    output_width=size, output_height=size,
+                )
+                bg_bytes_raw = cairosvg.svg2png(
+                    bytestring=bg_only_svg.encode('utf-8'),
+                    output_width=size, output_height=size,
+                )
+                bg_img = Image.open(BytesIO(bg_bytes_raw)).convert("RGBA")
+                icon_img = Image.open(BytesIO(icon_bytes_raw)).convert("RGBA")
+                r, g, b, bg_a = bg_img.split()
+                _, _, _, icon_a = icon_img.split()
+                # Invert icon alpha: opaque icon pixel (255) → 0; transparent (0) → 255
+                inv_icon_a = ImageOps.invert(icon_a)
+                # multiply(a, b) = a*b/255  →  bg_a * (1 - icon_a/255)
+                new_alpha = ImageChops.multiply(bg_a, inv_icon_a)
+                result_img = Image.merge("RGBA", (r, g, b, new_alpha))
+                buf = BytesIO()
+                result_img.save(buf, format='PNG')
+                png_bytes = buf.getvalue()
+            else:
+                # Convert SVG to PNG bytes
+                png_bytes = cairosvg.svg2png(
+                    bytestring=svg_content.encode('utf-8'),
+                    output_width=size,
+                    output_height=size,
+                )
             
             if format == "png":
                 output_path.parent.mkdir(parents=True, exist_ok=True)

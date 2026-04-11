@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "icon-gen-ai"
-version = "0.4.11"
+version = "0.6.0"
 description = "Generate pixel-perfect icons from Iconify, direct URLs, and local files—with animation support and exports to PNG, SVG, WebP, and ICO"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,6 +31,15 @@ ai = [
     "python-dotenv>=1.0.0",
 ]
 
+[dependency-groups]
+dev = [
+    "black",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "twine>=6.2.0",
+]
+
 [project.scripts]
 icon-gen-ai = "icon_gen_ai.cli:cli"
 
@@ -52,11 +61,4 @@ omit = [
     "src/icon_gen/*",  # Legacy compatibility layer
 ]
 
-[dependency-groups]
-dev = [
-    "black",
-    "pytest",
-    "pytest-cov",
-    "ruff",
-    "twine>=6.2.0",
-]
+
