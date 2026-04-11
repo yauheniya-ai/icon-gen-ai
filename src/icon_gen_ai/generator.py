@@ -22,6 +22,8 @@ FormatType = Literal["svg", "png", "webp", "ico"]
 
 def parse_color(color: str) -> Tuple[int, int, int]:
     """Parse color string to RGB tuple (supports hex and CSS3 named colors)."""
+    if color.lower() in ('transparent', 'none'):
+        return (0, 0, 0)
     try:
         rgb = ImageColor.getrgb(color)
         return rgb[:3] if len(rgb) >= 3 else rgb
@@ -152,9 +154,13 @@ class IconGenerator:
             # Recolor all non-transparent pixels
             pixels = list(img.getdata())
             new_pixels = []
+            is_transparent_color = target_color.lower() in ('transparent', 'none')
             for r, g, b, a in pixels:
                 if a > 0:  # Non-transparent pixel
-                    new_pixels.append((*target_rgb, a))
+                    if is_transparent_color:
+                        new_pixels.append((r, g, b, 0))  # Erase: fully transparent
+                    else:
+                        new_pixels.append((*target_rgb, a))
                 else:
                     new_pixels.append((r, g, b, a))
             
@@ -361,6 +367,7 @@ class IconGenerator:
                             root.remove(style)
 
                     # Apply color to fill/stroke attributes (preserves animations)
+                    _is_transparent = color.lower() in ('transparent', 'none')
                     def apply_color_preserve_animation(el):
                         tag = el.tag.split('}')[-1] if '}' in el.tag else el.tag
                         
@@ -374,14 +381,20 @@ class IconGenerator:
                         }
                         
                         if tag in visual_tags:
-                            current_fill = el.get('fill', '')
-                            if current_fill and current_fill.lower() not in ('none', 'transparent', 'currentcolor'):
-                                el.set('fill', color)
-                            elif not current_fill and tag != 'g':
-                                el.set('fill', color)
-                            
-                            if el.get('stroke') and el.get('stroke').lower() not in ('none', 'transparent'):
-                                el.set('stroke', color)
+                            if _is_transparent:
+                                # Make the icon invisible (transparent / cutout)
+                                el.set('fill', 'none')
+                                if el.get('stroke'):
+                                    el.set('stroke', 'none')
+                            else:
+                                current_fill = el.get('fill', '')
+                                if current_fill and current_fill.lower() not in ('none', 'transparent', 'currentcolor'):
+                                    el.set('fill', color)
+                                elif not current_fill and tag != 'g':
+                                    el.set('fill', color)
+                                
+                                if el.get('stroke') and el.get('stroke').lower() not in ('none', 'transparent'):
+                                    el.set('stroke', color)
                         
                         for child in el:
                             apply_color_preserve_animation(child)
@@ -666,7 +679,10 @@ class IconGenerator:
                 )
 
         elif icon_name:
-            fetch_color = "black" if isinstance(color, tuple) else (color or "currentColor")
+            fetch_color = "black" if (
+                isinstance(color, tuple) or
+                (isinstance(color, str) and color.lower() in ('transparent', 'none'))
+            ) else (color or "currentColor")
             svg_content = self.get_icon_svg(icon_name, fetch_color)
 
         else:

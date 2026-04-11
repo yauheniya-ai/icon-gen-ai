@@ -8,6 +8,11 @@
 - **Output panel: Color fields no longer jump to `#ffffff` while typing** - Text inputs now pass values through directly on each keystroke; CSS color name normalisation (e.g. `red` → `#ff0000`) is deferred to `onBlur` so partial or deleted input is never overwritten mid-edit
 - **Output panel: `transparent` is now a valid color value** - Typing `transparent` in any color field (icon or background) is preserved as-is and passed correctly to the backend; the color picker falls back to white for display only
 
+### Backend / Generator
+
+### Fixed
+- **Generator: `transparent` accepted as icon color** - Passing `color="transparent"` (or `"none"`) now correctly makes icon paths invisible (`fill="none"`, `stroke="none"`) in the SVG-native path; the raster recolor path erases all visible pixels when the target color is transparent; the Iconify API fetch uses `"black"` as an intermediate color so the SVG is retrieved correctly before transparency is applied; `parse_color` no longer raises on `"transparent"`/`"none"` inputs
+
 ## 0.4.10
 
 ### Fixed
