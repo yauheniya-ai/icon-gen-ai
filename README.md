@@ -28,6 +28,24 @@ Generate pixel-perfect icons from Iconify, direct URLs, and local files—with a
 <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/feat_gradient.svg" height="16px"> Gradient color option for icons and backgrounds  
 <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/output/feat_save.svg" height="16px"> Export to SVG, PNG, WEBP, or ICO format  
 
+## Tech Stack
+
+**Backend**
+- <img src="https://api.iconify.design/devicon:python.svg" width="16" height="16"> [Python](https://www.python.org) 3.10+ — package language
+- Current support for LLMs from <img src="https://api.iconify.design/logos:claude-icon.svg" width="16" height="16"> Anthropic and <img src="https://api.iconify.design/simple-icons:openai.svg" width="16" height="16">OpenAI directly or via <img src="https://api.iconify.design/logos:hugging-face-icon.svg" width="16" height="16"> Hugging Face
+
+**Playground**
+- <img src="https://api.iconify.design/devicon:react.svg" width="16" height="16"> [React](https://react.dev) — interactive frontend
+- <img src="https://api.iconify.design/devicon:vitejs.svg" width="16" height="16"> [Vite](https://vite.dev) — fast dev server and production bundler
+- <img src="https://api.iconify.design/devicon:tailwindcss.svg" width="16" height="16"> [Tailwind CSS](https://v2.tailwindcss.com/docs) — utility-first styling
+- <img src="https://api.iconify.design/logos:javascript.svg" width="16" height="16"> Javascript — component and API code
+
+**CLI**
+- <img src="https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/.github/.images/click.svg" width="16" height="16"> [Click](https://click.palletsprojects.com/en/stable/)  — Python package for creating beautiful command line interfaces in a composable way
+
+**Packaging**
+- <img src="https://api.iconify.design/devicon:pypi.svg" width="16" height="16"> [PyPI](https://pypi.org/project/icon-gen-ai/) — distributed as an installable Python package
+
 ## Installation
 
 ```bash

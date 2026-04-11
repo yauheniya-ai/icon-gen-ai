@@ -1,5 +1,9 @@
 # icon-gen-ai – Changelog
 
+## 0.4.11 (2026-04-11)
+
+
+
 ## 0.4.10
 
 ### Fixed
