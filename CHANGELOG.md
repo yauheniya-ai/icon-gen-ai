@@ -2,7 +2,11 @@
 
 ## 0.4.11 (2026-04-11)
 
+### Frontend
 
+### Fixed
+- **Output panel: Color fields no longer jump to `#ffffff` while typing** - Text inputs now pass values through directly on each keystroke; CSS color name normalisation (e.g. `red` → `#ff0000`) is deferred to `onBlur` so partial or deleted input is never overwritten mid-edit
+- **Output panel: `transparent` is now a valid color value** - Typing `transparent` in any color field (icon or background) is preserved as-is and passed correctly to the backend; the color picker falls back to white for display only
 
 ## 0.4.10
 
