@@ -1,5 +1,17 @@
 # icon-gen-ai – Changelog
 
+## 0.6.1 (2026-05-03)
+
+### Changed
+- **CLI: Styled banner on launch** - Running `icon-gen-ai` with no arguments now displays an ASCII banner and version in mediumslateblue, followed by a fully styled help output
+- **CLI: Custom colored help output** - Replaced Click's default plain-text help with a hand-crafted styled version using the package color palette: deeppink section headers, mediumslateblue option names, deepskyblue command names
+- **CLI: Styled `--version` output** - `--version` now prints a colored `icon-gen-ai  vX.Y.Z` line instead of Click's default plain text
+- **CLI: Color palette** - All CLI output uses three colors only: mediumslateblue `(123, 104, 238)`, deeppink `(255, 20, 147)`, and deepskyblue `(0, 191, 255)`
+- **CLI: Styled generate output** - Parameter labels are deepskyblue, values are bold; success message shows a colored checkmark with the output path
+- **CLI: Styled search results** - Result index is deeppink bold, icon name is bold white, reason text is deepskyblue
+- **CLI: Styled providers output** - Status lines use mediumslateblue checkmarks, labels in deepskyblue, active provider name in deeppink
+- **CLI: No extra dependencies** - All styling uses `click.style()` built into Click; no `rich` or other packages required
+
 ## 0.6.0 (2026-04-11)
 
 ### Feature

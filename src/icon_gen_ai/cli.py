@@ -32,11 +32,90 @@ def parse_color(value: str | None, label: str):
 
 
 # -------------------- CLI --------------------
-@click.version_option(version=VERSION, package_name="icon-gen-ai")
-@click.group()
-def cli():
+
+# Color palette
+SLATEBLUE = (123, 104, 238)   # mediumslateblue
+DEEPPINK   = (255,  20, 147)  # deeppink
+SKYBLUE    = (  0, 191, 255)  # deepskyblue
+
+BANNER = """\
+ +-+-+-+-+-+-+-+-+-+-+-+
+ |i|c|o|n|-|g|e|n|-|a|i|
+ +-+-+-+-+-+-+-+-+-+-+-+
+"""
+
+def _label(text: str) -> str:
+    """Deepskyblue label."""
+    return click.style(text, fg=SKYBLUE)
+
+def _value(text: str) -> str:
+    """Bold white value."""
+    return click.style(str(text), bold=True)
+
+def _ok(text: str) -> str:
+    """Mediumslateblue success marker."""
+    return click.style(text, fg=SLATEBLUE, bold=True)
+
+def _warn(text: str) -> str:
+    """Deeppink warning/error marker."""
+    return click.style(text, fg=DEEPPINK, bold=True)
+
+def _muted(text: str) -> str:
+    return click.style(text, fg=SKYBLUE)
+
+
+def _print_help():
+    click.echo(click.style("  Generate pixel-perfect icons from Iconify, URLs, and local files.", fg=SKYBLUE))
+    click.echo("")
+    click.echo(click.style("Usage:", fg=DEEPPINK, bold=True))
+    click.echo(f"  icon-gen-ai " + click.style("[OPTIONS]", fg=SLATEBLUE) + " " + click.style("COMMAND", fg=SKYBLUE, bold=True) + " [ARGS]...")
+    click.echo("")
+    click.echo(click.style("Options:", fg=DEEPPINK, bold=True))
+    click.echo("  " + click.style("--version", fg=SLATEBLUE) + "  Show the version and exit.")
+    click.echo("  " + click.style("--help   ", fg=SLATEBLUE) + "  Show this message and exit.")
+    click.echo("")
+    click.echo(click.style("Commands:", fg=DEEPPINK, bold=True))
+    click.echo("  " + click.style("generate ", fg=SKYBLUE, bold=True) + "  Generate icons from Iconify or local files.")
+    click.echo("  " + click.style("search   ", fg=SKYBLUE, bold=True) + "  Search for icons using AI-powered natural language queries.")
+    click.echo("  " + click.style("providers", fg=SKYBLUE, bold=True) + "  Show AI provider status.")
+    click.echo("")
+
+
+def _print_banner():
+    click.echo(click.style(BANNER, fg=SLATEBLUE, bold=True))
+    click.echo(click.style(f"  v{VERSION}", fg=SKYBLUE) + "\n")
+
+
+def _version_callback(ctx, _param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(
+        click.style("icon-gen-ai", fg=SLATEBLUE, bold=True)
+        + "  "
+        + click.style(f"v{VERSION}", fg=DEEPPINK, bold=True)
+    )
+    click.echo("")
+    ctx.exit()
+
+
+def _help_callback(ctx, _param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    _print_help()
+    ctx.exit()
+
+
+@click.group(invoke_without_command=True)
+@click.option("--version", is_flag=True, is_eager=True, expose_value=False,
+              callback=_version_callback, help="Show the version and exit.")
+@click.option("--help", is_flag=True, is_eager=True, expose_value=False,
+              callback=_help_callback, help="Show this message and exit.")
+@click.pass_context
+def cli(ctx):
     """icon-gen-ai — generate icons from Iconify, URLs, or local files."""
-    pass
+    if ctx.invoked_subcommand is None:
+        _print_banner()
+        _print_help()
 
 
 # -------------------- GENERATE --------------------
@@ -144,19 +223,17 @@ def generate(
 
     generator = IconGenerator(output_dir=str(output_dir))
 
-    click.echo("\nGenerating icon")
-    click.echo(f"  Source: {icon_name or input_file}")
-    click.echo(f"  Size: {size}px")
+    click.echo("\n" + _ok("◆ Generating icon") + "\n")
+    click.echo(f"  {_label('Source')}        {_value(icon_name or input_file)}")
+    click.echo(f"  {_label('Size')}          {_value(str(size) + 'px')}")
     if scale is not None:
-        click.echo(f"  Scale: {scale:.0%}")
-    click.echo(f"  Color: {parsed_color or 'original'}")
-    click.echo(f"  Background: {parsed_bg or 'transparent'}")
-    click.echo(f"  Border radius: {border_radius}px")
-
-    click.echo(f"  Animation: {animation or 'none'}")
-
+        click.echo(f"  {_label('Scale')}         {_value(f'{scale:.0%}')}")
+    click.echo(f"  {_label('Color')}         {_value(parsed_color or 'original')}")
+    click.echo(f"  {_label('Background')}    {_value(parsed_bg or 'transparent')}")
+    click.echo(f"  {_label('Border radius')} {_value(str(border_radius) + 'px')}")
+    click.echo(f"  {_label('Animation')}     {_value(animation or 'none')}")
     if outline_width > 0:
-        click.echo(f"  Outline: {outline_width}px ({outline_color})")
+        click.echo(f"  {_label('Outline')}       {_value(str(outline_width) + 'px')} {_muted('(' + str(outline_color) + ')')}")
 
     result = generator.generate_icon(
         icon_name=icon_name,
@@ -179,7 +256,7 @@ def generate(
     if not result:
         raise click.ClickException("Failed to generate icon")
 
-    click.echo(f"\n✓ Saved to {result}\n")
+    click.echo("\n" + _ok("✓ Saved to ") + click.style(str(result), fg=SKYBLUE, underline=True) + "\n")
 
 
 # -------------------- SEARCH --------------------
@@ -211,18 +288,19 @@ def search(query, count, generate, style, project_type):
         from .ai import IconAssistant, get_available_providers
     except ImportError:
         raise click.ClickException(
-            'AI features not installed. Run: pip install "icon-gen-ai[ai]"'
+            _warn('AI features not installed.') + ' Run: ' +
+            click.style('pip install "icon-gen-ai[ai]"', fg=SLATEBLUE)
         )
 
     providers = get_available_providers()
     if not providers:
-        click.echo("\nAI provider packages not found\n")
-        click.echo("Install AI extras to use AI-powered icon search:")
-        click.echo('  pip install "icon-gen-ai[ai]"')
-        click.echo("\nAfter installation, configure at least one API key:")
-        click.echo("  • ANTHROPIC_API_KEY (Anthropic)")
-        click.echo("  • HF_TOKEN (Hugging Face)")
-        click.echo("  • OPENAI_API_KEY (OpenAI)\n")
+        click.echo("\n" + _warn("✗ AI provider packages not found") + "\n")
+        click.echo(_label("Install AI extras:"))
+        click.echo(click.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
+        click.echo("\n" + _label("Then configure an API key:"))
+        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
         return
 
     assistant = IconAssistant()
@@ -238,7 +316,7 @@ def search(query, count, generate, style, project_type):
     if project_type:
         context["project_type"] = project_type
 
-    click.echo(f"\nSearching: {query}\n")
+    click.echo("\n" + _ok("◆ Searching: ") + _value(query) + "\n")
 
     response = assistant.discover_icons(query, context=context)
 
@@ -246,15 +324,15 @@ def search(query, count, generate, style, project_type):
     display_count = min(count, len(response.suggestions)) if count else min(25, len(response.suggestions))
     
     for i, s in enumerate(response.suggestions[:display_count], 1):
-        click.echo(f"{i}. {s.icon_name}")
-        click.echo(f"   {s.reason}\n")
+        click.echo(click.style(f"  {i}. ", fg=DEEPPINK, bold=True) + _value(s.icon_name))
+        click.echo(_muted(f"     {s.reason}") + "\n")
 
     if not generate:
         return
 
     generator = IconGenerator(output_dir="output")
 
-    click.echo("Generating icons...\n")
+    click.echo("\n" + _ok("◆ Generating icons...") + "\n")
 
     for s in response.suggestions[:display_count]:
         generator.generate_icon(
@@ -276,43 +354,46 @@ def providers():
     try:
         from .ai import IconAssistant, get_available_providers
     except ImportError:
-        click.echo("\nAI features not installed\n")
-        click.echo("Install AI extras to use AI-powered icon search:")
-        click.echo('  pip install "icon-gen-ai[ai]"')
-        click.echo("\nAfter installation, configure at least one API key:")
-        click.echo("  • ANTHROPIC_API_KEY (Anthropic)")
-        click.echo("  • HF_TOKEN (Hugging Face)")
-        click.echo("  • OPENAI_API_KEY (OpenAI)\n")
+        click.echo("\n" + _warn("✗ AI features not installed") + "\n")
+        click.echo(_label("Install AI extras:"))
+        click.echo(click.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
+        click.echo("\n" + _label("Then configure an API key:"))
+        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
         return
 
-    providers = get_available_providers()
-    
-    if not providers:
-        click.echo("\nAI provider packages not found\n")
-        click.echo("Install AI extras to use AI-powered icon search:")
-        click.echo('  pip install "icon-gen-ai[ai]"')
-        click.echo("\nAfter installation, configure at least one API key:")
-        click.echo("  • ANTHROPIC_API_KEY (Anthropic)")
-        click.echo("  • HF_TOKEN (Hugging Face)")
-        click.echo("  • OPENAI_API_KEY (OpenAI)\n")
+    providers_list = get_available_providers()
+
+    if not providers_list:
+        click.echo("\n" + _warn("✗ AI provider packages not found") + "\n")
+        click.echo(_label("Install AI extras:"))
+        click.echo(click.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
+        click.echo("\n" + _label("Then configure an API key:"))
+        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
         return
-    
-    click.echo(f"\n✓ AI extras installed")
-    click.echo(f"✓ Available providers: {', '.join(providers)}")
+
+    click.echo("")
+    click.echo(_ok("✓ ") + _label("AI extras installed"))
+    click.echo(_ok("✓ ") + _label("Available providers: ") + _value(", ".join(providers_list)))
 
     assistant = IconAssistant()
     if assistant.is_available():
         click.echo(
-            f"✓ Active provider: {assistant.provider.get_provider_name()} "
-            f"({assistant.provider.model})\n"
+            _ok("✓ ") + _label("Active provider:    ")
+            + click.style(assistant.provider.get_provider_name(), fg=DEEPPINK, bold=True)
+            + _muted(f" ({assistant.provider.model})")
+            + "\n"
         )
     else:
-        click.echo("\n⚠ No API key configured")
-        click.echo("\nConfigure at least one API key to use AI features:")
-        click.echo("  • ANTHROPIC_API_KEY (Anthropic)")
-        click.echo("  • HF_TOKEN (Hugging Face)")
-        click.echo("  • OPENAI_API_KEY (OpenAI)")
-        click.echo("\nSet via environment variable or .env file\n")
+        click.echo("\n" + _warn("⚠ No API key configured") + "\n")
+        click.echo(_label("Configure an API key to use AI features:"))
+        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)")
+        click.echo(_muted("\n  Set via environment variable or .env file") + "\n")
 
 
 # -------------------- ENTRYPOINT --------------------

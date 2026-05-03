@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "icon-gen-ai"
-version = "0.6.0"
+version = "0.7.0"
 description = "Generate pixel-perfect icons from Iconify, direct URLs, and local files—with animation support and exports to PNG, SVG, WebP, and ICO"
 readme = "README.md"
 requires-python = ">=3.10"
