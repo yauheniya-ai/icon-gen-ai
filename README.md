@@ -329,10 +329,13 @@ uv run pytest --cov=src --cov-report=term-missing
 
 MIT License – see <a href="https://github.com/yauheniya-ai/icon-gen-ai/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">LICENSE</a> file for details.
 
-## Author
-
-Yauheniya
-
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome!
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-change`)
+3. Make your changes
+4. Format and lint: `ruff format src/ tests/ && ruff check src/ tests/`
+5. Run the test suite: `pytest --cov=src --cov-report=term-missing`
+6. Submit a pull request
