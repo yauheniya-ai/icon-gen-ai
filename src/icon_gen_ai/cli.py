@@ -1,13 +1,33 @@
 """Command-line interface for icon-gen-ai."""
 
 import os
-import click
+from enum import Enum
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
-from .generator import IconGenerator
+
+import typer
 from importlib.metadata import version
+from .generator import IconGenerator
 
 VERSION = version("icon-gen-ai")
+
+
+# -------------------- ENUMS --------------------
+
+
+class OutputFormat(str, Enum):
+    svg = "svg"
+    png = "png"
+    webp = "webp"
+
+
+class Direction(str, Enum):
+    horizontal = "horizontal"
+    vertical = "vertical"
+    diagonal = "diagonal"
+    radial = "radial"
+
 
 # -------------------- HELPERS --------------------
 
@@ -24,7 +44,7 @@ def parse_color(value: str | None, label: str):
     if value.startswith("(") and value.endswith(")"):
         colors = [c.strip() for c in value[1:-1].split(",")]
         if len(colors) != 2:
-            raise click.BadParameter(
+            raise typer.BadParameter(
                 f"{label} gradient must have exactly 2 colors: (color1,color2)"
             )
         return tuple(colors)
@@ -36,8 +56,8 @@ def parse_color(value: str | None, label: str):
 
 # Color palette
 SLATEBLUE = (123, 104, 238)  # mediumslateblue
-DEEPPINK = (255, 20, 147)  # deeppink
-SKYBLUE = (0, 191, 255)  # deepskyblue
+DEEPPINK = (255, 20, 147)    # deeppink
+SKYBLUE = (0, 191, 255)      # deepskyblue
 
 BANNER = """\
  +-+-+-+-+-+-+-+-+-+-+-+
@@ -48,119 +68,110 @@ BANNER = """\
 
 def _label(text: str) -> str:
     """Deepskyblue label."""
-    return click.style(text, fg=SKYBLUE)
+    return typer.style(text, fg=SKYBLUE)
 
 
 def _value(text: str) -> str:
     """Bold white value."""
-    return click.style(str(text), bold=True)
+    return typer.style(str(text), bold=True)
 
 
 def _ok(text: str) -> str:
     """Mediumslateblue success marker."""
-    return click.style(text, fg=SLATEBLUE, bold=True)
+    return typer.style(text, fg=SLATEBLUE, bold=True)
 
 
 def _warn(text: str) -> str:
     """Deeppink warning/error marker."""
-    return click.style(text, fg=DEEPPINK, bold=True)
+    return typer.style(text, fg=DEEPPINK, bold=True)
 
 
 def _muted(text: str) -> str:
-    return click.style(text, fg=SKYBLUE)
+    return typer.style(text, fg=SKYBLUE)
 
 
 def _dim(text: str) -> str:
-    return click.style(text, dim=True)
+    return typer.style(text, dim=True)
 
 
 def _print_help():
-    click.echo(
-        click.style(
+    typer.echo(
+        typer.style(
             "  Generate pixel-perfect icons from Iconify, URLs, and local files.",
             fg=SKYBLUE,
         )
     )
-    click.echo("")
-    click.echo(click.style("Usage:", fg=DEEPPINK, bold=True))
-    click.echo(
+    typer.echo("")
+    typer.echo(typer.style("Usage:", fg=DEEPPINK, bold=True))
+    typer.echo(
         "  icon-gen-ai "
-        + click.style("[OPTIONS]", fg=SLATEBLUE)
+        + typer.style("[OPTIONS]", fg=SLATEBLUE)
         + " "
-        + click.style("COMMAND", fg=SKYBLUE, bold=True)
+        + typer.style("COMMAND", fg=SKYBLUE, bold=True)
         + " [ARGS]..."
     )
-    click.echo("")
-    click.echo(click.style("Options:", fg=DEEPPINK, bold=True))
-    click.echo(
-        "  " + click.style("--version", fg=SLATEBLUE) + "  Show the version and exit."
+    typer.echo("")
+    typer.echo(typer.style("Options:", fg=DEEPPINK, bold=True))
+    typer.echo(
+        "  " + typer.style("--version", fg=SLATEBLUE) + "  Show the version and exit."
     )
-    click.echo(
-        "  " + click.style("--help   ", fg=SLATEBLUE) + "  Show this message and exit."
+    typer.echo(
+        "  " + typer.style("--help   ", fg=SLATEBLUE) + "  Show this message and exit."
     )
-    click.echo("")
-    click.echo(click.style("Commands:", fg=DEEPPINK, bold=True))
-    click.echo(
+    typer.echo("")
+    typer.echo(typer.style("Commands:", fg=DEEPPINK, bold=True))
+    typer.echo(
         "  "
-        + click.style("generate ", fg=SKYBLUE, bold=True)
+        + typer.style("generate ", fg=SKYBLUE, bold=True)
         + "  Generate icons from Iconify or local files."
     )
-    click.echo(
+    typer.echo(
         "  "
-        + click.style("search   ", fg=SKYBLUE, bold=True)
+        + typer.style("search   ", fg=SKYBLUE, bold=True)
         + "  Search for icons using AI-powered natural language queries."
     )
-    click.echo(
+    typer.echo(
         "  "
-        + click.style("providers", fg=SKYBLUE, bold=True)
+        + typer.style("providers", fg=SKYBLUE, bold=True)
         + "  Show AI provider status."
     )
-    click.echo("")
+    typer.echo("")
 
 
 def _print_banner():
-    click.echo(click.style(BANNER, fg=SLATEBLUE, bold=True))
-    click.echo(click.style(f"  v{VERSION}", fg=SKYBLUE) + "\n")
+    typer.echo(typer.style(BANNER, fg=SLATEBLUE, bold=True))
+    typer.echo(typer.style(f"  v{VERSION}", fg=SKYBLUE) + "\n")
 
 
-def _version_callback(ctx, _param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    click.echo(
-        click.style("icon-gen-ai", fg=SLATEBLUE, bold=True)
-        + "  "
-        + click.style(f"v{VERSION}", fg=DEEPPINK, bold=True)
-    )
-    click.echo("")
-    ctx.exit()
+def _version_callback(value: bool):
+    if value:
+        typer.echo(
+            typer.style("icon-gen-ai", fg=SLATEBLUE, bold=True)
+            + "  "
+            + typer.style(f"v{VERSION}", fg=DEEPPINK, bold=True)
+        )
+        typer.echo("")
+        raise typer.Exit()
 
 
-def _help_callback(ctx, _param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    _print_help()
-    ctx.exit()
-
-
-@click.group(invoke_without_command=True)
-@click.option(
-    "--version",
-    is_flag=True,
-    is_eager=True,
-    expose_value=False,
-    callback=_version_callback,
-    help="Show the version and exit.",
+app = typer.Typer(
+    add_completion=True,
+    no_args_is_help=False,
+    help="icon-gen-ai — generate icons from Iconify, URLs, or local files.",
 )
-@click.option(
-    "--help",
-    is_flag=True,
-    is_eager=True,
-    expose_value=False,
-    callback=_help_callback,
-    help="Show this message and exit.",
-)
-@click.pass_context
-def cli(ctx):
+
+
+@app.callback(invoke_without_command=True)
+def cli(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show the version and exit.",
+    ),
+):
     """icon-gen-ai — generate icons from Iconify, URLs, or local files."""
     if ctx.invoked_subcommand is None:
         _print_banner()
@@ -170,85 +181,83 @@ def cli(ctx):
 # -------------------- GENERATE --------------------
 
 
-@cli.command()
-@click.argument("icon", required=False)
-@click.option("-i", "--input", "input_file", help="Local image file or direct URL")
-@click.option("-o", "--output", help="Output file path")
-@click.option("--format", default="svg", type=click.Choice(["svg", "png", "webp"]))
-@click.option("--size", default=256, show_default=True)
-@click.option(
-    "--scale",
-    type=float,
-    help="Icon scale (0.0-1.0). Default: 1.0 without bg, 0.7 with bg",
-)
-@click.option("--color", help="Icon color or gradient '(c1,c2)'")
-@click.option(
-    "--direction",
-    default="horizontal",
-    type=click.Choice(["horizontal", "vertical", "diagonal", "radial"]),
-    show_default=True,
-    help="Icon gradient direction",
-)
-@click.option("--bg-color", help="Background color or gradient '(c1,c2)'")
-@click.option(
-    "--bg-direction",
-    default="horizontal",
-    type=click.Choice(["horizontal", "vertical", "diagonal", "radial"]),
-    show_default=True,
-    help="Background gradient direction",
-)
-@click.option("--border-radius", default=0, show_default=True)
-@click.option("--outline-width", default=0, show_default=True)
-@click.option("--outline-color", help="Outline color")
-@click.option(
-    "--animation",
-    help="Animation preset e.g. 'spin:2s', 'pulse:1.5s', 'flip-h:1s', 'flip-v:1s'",
-)
+@app.command()
 def generate(
-    icon,
-    input_file,
-    output,
-    format,
-    size,
-    scale,
-    color,
-    direction,
-    bg_color,
-    bg_direction,
-    border_radius,
-    outline_width,
-    outline_color,
-    animation,
+    icon: Optional[str] = typer.Argument(
+        None, help="Iconify icon name (e.g. simple-icons:openai)"
+    ),
+    input_file: Optional[str] = typer.Option(
+        None, "-i", "--input", help="Local image file or direct URL"
+    ),
+    output: Optional[str] = typer.Option(None, "-o", "--output", help="Output file path"),
+    format: OutputFormat = typer.Option(
+        OutputFormat.svg, "--format", help="Output format"
+    ),
+    size: int = typer.Option(256, "--size", show_default=True),
+    scale: Optional[float] = typer.Option(
+        None,
+        "--scale",
+        help="Icon scale (0.0-1.0). Default: 1.0 without bg, 0.7 with bg",
+    ),
+    color: Optional[str] = typer.Option(
+        None, "--color", help="Icon color or gradient '(c1,c2)'"
+    ),
+    direction: Direction = typer.Option(
+        Direction.horizontal,
+        "--direction",
+        show_default=True,
+        help="Icon gradient direction",
+    ),
+    bg_color: Optional[str] = typer.Option(
+        None, "--bg-color", help="Background color or gradient '(c1,c2)'"
+    ),
+    bg_direction: Direction = typer.Option(
+        Direction.horizontal,
+        "--bg-direction",
+        show_default=True,
+        help="Background gradient direction",
+    ),
+    border_radius: int = typer.Option(0, "--border-radius", show_default=True),
+    outline_width: int = typer.Option(0, "--outline-width", show_default=True),
+    outline_color: Optional[str] = typer.Option(
+        None, "--outline-color", help="Outline color"
+    ),
+    animation: Optional[str] = typer.Option(
+        None,
+        "--animation",
+        help="Animation preset e.g. 'spin:2s', 'pulse:1.5s', 'flip-h:1s', 'flip-v:1s'",
+    ),
 ):
     """Generate icons from Iconify or local files.
-    
+
     Examples:
-    
-        # From Iconify:        
+
+        # From Iconify:
         icon-gen-ai generate simple-icons:openai --color white --size 254
-        
+
         # From direct URL
-        icon-gen-ai generate -i https://upload.wikimedia.org/wikipedia/commons/b/b0/Claude_AI_symbol.svg -o output/claude-icon.svg \
+        icon-gen-ai generate -i https://upload.wikimedia.org/wikipedia/commons/b/b0/Claude_AI_symbol.svg -o output/claude-icon.svg \\
   --color deeppink --bg-color white --border-radius 64 --size 128 --outline-color deeppink --outline-width 4
-        
+
         # From local file:
-        icon-gen-ai generate -i input/deepseek-icon.png -o output/deepseek-icon.svg \
+        icon-gen-ai generate -i input/deepseek-icon.png -o output/deepseek-icon.svg \\
   --color white --bg-color '(mediumslateblue,deeppink)' --border-radius 10 --size 128
-        
+
         # Preserve original colors:
         icon-gen-ai generate -i devicon:pypi --bg-color '(tan,cyan)' --size 128 --border-radius 64
-        
+
         # With gradient directions:
-        icon-gen-ai generate gis:globe --color '(deeppink,mediumslateblue)' --direction diagonal \
+        icon-gen-ai generate gis:globe --color '(deeppink,mediumslateblue)' --direction diagonal \\
   --bg-color '(lime,white)' --bg-direction vertical --size 256 -o notes/globe.svg
-        
     """
 
     if not icon and not input_file:
-        raise click.UsageError("Provide ICON or --input")
+        typer.echo(_warn("Error: Provide ICON or --input"), err=True)
+        raise typer.Exit(code=2)
 
     if icon and input_file:
-        raise click.UsageError("Use either ICON or --input, not both")
+        typer.echo(_warn("Error: Use either ICON or --input, not both"), err=True)
+        raise typer.Exit(code=2)
 
     # Resolve input
     direct_url = None
@@ -262,14 +271,14 @@ def generate(
             and not is_url(input_file)
             and not os.path.exists(input_file)
         ):
-            # It's an Iconify icon name used with -i flag
             icon_name = input_file
             input_file = None
         elif is_url(input_file):
             direct_url = input_file
         else:
             if not os.path.exists(input_file):
-                raise click.FileError(input_file, hint="File does not exist")
+                typer.echo(_warn(f"Error: {input_file}: File does not exist"), err=True)
+                raise typer.Exit(code=2)
             local_file = input_file
 
     # Parse colors
@@ -279,6 +288,7 @@ def generate(
     # Output
     output_path = Path(output) if output else None
     output_dir = output_path.parent if output_path else Path("output")
+    format_str = format.value
 
     if output_path:
         output_name = output_path.stem
@@ -286,7 +296,7 @@ def generate(
         if output_path.suffix:
             inferred_format = output_path.suffix.lstrip(".")
             if inferred_format in ["svg", "png", "webp", "ico"]:
-                format = inferred_format
+                format_str = inferred_format
     elif local_file:
         output_name = Path(local_file).stem
     elif direct_url:
@@ -296,17 +306,17 @@ def generate(
 
     generator = IconGenerator(output_dir=str(output_dir))
 
-    click.echo("\n" + _ok("◆ Generating icon") + "\n")
-    click.echo(f"  {_label('Source')}        {_value(icon_name or input_file)}")
-    click.echo(f"  {_label('Size')}          {_value(str(size) + 'px')}")
+    typer.echo("\n" + _ok("◆ Generating icon") + "\n")
+    typer.echo(f"  {_label('Source')}        {_value(icon_name or input_file)}")
+    typer.echo(f"  {_label('Size')}          {_value(str(size) + 'px')}")
     if scale is not None:
-        click.echo(f"  {_label('Scale')}         {_value(f'{scale:.0%}')}")
-    click.echo(f"  {_label('Color')}         {_value(parsed_color or 'original')}")
-    click.echo(f"  {_label('Background')}    {_value(parsed_bg or 'transparent')}")
-    click.echo(f"  {_label('Border radius')} {_value(str(border_radius) + 'px')}")
-    click.echo(f"  {_label('Animation')}     {_value(animation or 'none')}")
+        typer.echo(f"  {_label('Scale')}         {_value(f'{scale:.0%}')}")
+    typer.echo(f"  {_label('Color')}         {_value(parsed_color or 'original')}")
+    typer.echo(f"  {_label('Background')}    {_value(parsed_bg or 'transparent')}")
+    typer.echo(f"  {_label('Border radius')} {_value(str(border_radius) + 'px')}")
+    typer.echo(f"  {_label('Animation')}     {_value(animation or 'none')}")
     if outline_width > 0:
-        click.echo(
+        typer.echo(
             f"  {_label('Outline')}       {_value(str(outline_width) + 'px')} {_muted('(' + str(outline_color) + ')')}"
         )
 
@@ -315,13 +325,13 @@ def generate(
         direct_url=direct_url,
         local_file=local_file,
         output_name=output_name,
-        format=format,
+        format=format_str,
         size=size,
         scale=scale,
         color=parsed_color,
-        direction=direction,
+        direction=direction.value,
         bg_color=parsed_bg,
-        bg_direction=bg_direction,
+        bg_direction=bg_direction.value,
         border_radius=border_radius,
         outline_width=outline_width,
         outline_color=outline_color,
@@ -329,12 +339,13 @@ def generate(
     )
 
     if not result:
-        raise click.ClickException("Failed to generate icon")
+        typer.echo(_warn("Error: Failed to generate icon"), err=True)
+        raise typer.Exit(code=1)
 
-    click.echo(
+    typer.echo(
         "\n"
         + _ok("✓ Saved to ")
-        + click.style(str(result), fg=SKYBLUE, underline=True)
+        + typer.style(str(result), fg=SKYBLUE, underline=True)
         + "\n"
     )
 
@@ -342,18 +353,25 @@ def generate(
 # -------------------- SEARCH --------------------
 
 
-@cli.command()
-@click.argument("query")
-@click.option(
-    "-c",
-    "--count",
-    type=int,
-    help="Limit number of results to display (overrides LLM response)",
-)
-@click.option("-g", "--generate", is_flag=True, help="Generate icon files")
-@click.option("--style", help="Design style (modern, corporate, minimal, playful)")
-@click.option("--project-type", help="Project type for context")
-def search(query, count, generate, style, project_type):
+@app.command()
+def search(
+    query: str = typer.Argument(..., help="Natural language icon search query"),
+    count: Optional[int] = typer.Option(
+        None,
+        "-c",
+        "--count",
+        help="Limit number of results to display (overrides LLM response)",
+    ),
+    generate_icons: bool = typer.Option(
+        False, "-g", "--generate", help="Generate icon files"
+    ),
+    style: Optional[str] = typer.Option(
+        None, "--style", help="Design style (modern, corporate, minimal, playful)"
+    ),
+    project_type: Optional[str] = typer.Option(
+        None, "--project-type", help="Project type for context"
+    ),
+):
     """Search for icons using AI-powered natural language queries.
 
     The AI parses the count from your query (e.g., "5 icons for payment").
@@ -373,29 +391,35 @@ def search(query, count, generate, style, project_type):
     try:
         from .ai import IconAssistant, get_available_providers
     except ImportError:
-        raise click.ClickException(
+        typer.echo(
             _warn("AI features not installed.")
             + " Run: "
-            + click.style('pip install "icon-gen-ai[ai]"', fg=SLATEBLUE)
+            + typer.style('pip install "icon-gen-ai[ai]"', fg=SLATEBLUE),
+            err=True,
         )
+        raise typer.Exit(code=1)
 
     providers = get_available_providers()
     if not providers:
-        click.echo("\n" + _warn("✗ AI provider packages not found") + "\n")
-        click.echo(_label("Install AI extras:"))
-        click.echo(click.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
-        click.echo("\n" + _label("Then configure an API key:"))
-        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
-        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
-        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
+        typer.echo("\n" + _warn("✗ AI provider packages not found") + "\n")
+        typer.echo(_label("Install AI extras:"))
+        typer.echo(typer.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
+        typer.echo("\n" + _label("Then configure an API key:"))
+        typer.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        typer.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        typer.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
         return
 
     assistant = IconAssistant()
     if not assistant.is_available():
-        raise click.ClickException(
-            "AI extras installed but no API key configured.\n"
-            "Set one of: ANTHROPIC_API_KEY, HF_TOKEN, or OPENAI_API_KEY"
+        typer.echo(
+            _warn(
+                "AI extras installed but no API key configured.\n"
+                "Set one of: ANTHROPIC_API_KEY, HF_TOKEN, or OPENAI_API_KEY"
+            ),
+            err=True,
         )
+        raise typer.Exit(code=1)
 
     context = {}
     if style:
@@ -403,7 +427,7 @@ def search(query, count, generate, style, project_type):
     if project_type:
         context["project_type"] = project_type
 
-    click.echo("\n" + _ok("◆ Searching: ") + _value(query) + "\n")
+    typer.echo("\n" + _ok("◆ Searching: ") + _value(query) + "\n")
 
     response = assistant.discover_icons(query, context=context)
 
@@ -415,17 +439,17 @@ def search(query, count, generate, style, project_type):
     )
 
     for i, s in enumerate(response.suggestions[:display_count], 1):
-        click.echo(
-            click.style(f"  {i}. ", fg=DEEPPINK, bold=True) + _value(s.icon_name)
+        typer.echo(
+            typer.style(f"  {i}. ", fg=DEEPPINK, bold=True) + _value(s.icon_name)
         )
-        click.echo(_muted(f"     {s.reason}") + "\n")
+        typer.echo(_muted(f"     {s.reason}") + "\n")
 
-    if not generate:
+    if not generate_icons:
         return
 
     generator = IconGenerator(output_dir="output")
 
-    click.echo("\n" + _ok("◆ Generating icons...") + "\n")
+    typer.echo("\n" + _ok("◆ Generating icons...") + "\n")
 
     for s in response.suggestions[:display_count]:
         generator.generate_icon(
@@ -441,70 +465,71 @@ def search(query, count, generate, style, project_type):
 # -------------------- PROVIDERS --------------------
 
 
-@cli.command()
+@app.command()
 def providers():
     """Show AI provider status."""
 
     try:
         from .ai import IconAssistant, get_available_providers
     except ImportError:
-        click.echo("\n" + _warn("✗ AI features not installed") + "\n")
-        click.echo(_label("Install AI extras:"))
-        click.echo(click.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
-        click.echo("\n" + _label("Then configure an API key:"))
-        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
-        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
-        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
+        typer.echo("\n" + _warn("✗ AI features not installed") + "\n")
+        typer.echo(_label("Install AI extras:"))
+        typer.echo(typer.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
+        typer.echo("\n" + _label("Then configure an API key:"))
+        typer.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        typer.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        typer.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
         return
 
     providers_list = get_available_providers()
 
     if not providers_list:
-        click.echo("\n" + _warn("✗ AI provider packages not found") + "\n")
-        click.echo(_label("Install AI extras:"))
-        click.echo(click.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
-        click.echo("\n" + _label("Then configure an API key:"))
-        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
-        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
-        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
+        typer.echo("\n" + _warn("✗ AI provider packages not found") + "\n")
+        typer.echo(_label("Install AI extras:"))
+        typer.echo(typer.style('  pip install "icon-gen-ai[ai]"', fg=SLATEBLUE))
+        typer.echo("\n" + _label("Then configure an API key:"))
+        typer.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        typer.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        typer.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)\n")
         return
 
-    click.echo("")
-    click.echo(_ok("✓ ") + _label("AI extras installed"))
-    click.echo(
+    typer.echo("")
+    typer.echo(_ok("✓ ") + _label("AI extras installed"))
+    typer.echo(
         _ok("✓ ") + _label("Available providers: ") + _value(", ".join(providers_list))
     )
 
     assistant = IconAssistant()
     if assistant.is_available():
-        click.echo(
+        typer.echo(
             _ok("✓ ")
             + _label("Active provider:    ")
-            + click.style(
+            + typer.style(
                 assistant.provider.get_provider_name(), fg=DEEPPINK, bold=True
             )
             + _muted(f" ({assistant.provider.model})")
             + "\n"
         )
     else:
-        click.echo("\n" + _warn("⚠ No API key configured") + "\n")
-        click.echo(_label("Configure an API key to use AI features:"))
-        click.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
-        click.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
-        click.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)")
-        click.echo(_muted("\n  Set via environment variable or .env file") + "\n")
+        typer.echo("\n" + _warn("⚠ No API key configured") + "\n")
+        typer.echo(_label("Configure an API key to use AI features:"))
+        typer.echo(f"  {_dim('•')} ANTHROPIC_API_KEY  (Anthropic)")
+        typer.echo(f"  {_dim('•')} HF_TOKEN           (Hugging Face)")
+        typer.echo(f"  {_dim('•')} OPENAI_API_KEY     (OpenAI)")
+        typer.echo(_muted("\n  Set via environment variable or .env file") + "\n")
 
 
 # -------------------- ENTRYPOINT --------------------
+
+
 def main(args=None):
     """
     Entry point for console_scripts and testing.
 
     Args:
-        args (list[str], optional): Command-line arguments to pass to Click CLI.
+        args (list[str], optional): Command-line arguments to pass to Typer app.
     """
-    # If args is None, Click will use sys.argv by default
-    cli(args=args)
+    app(args)
 
 
 if __name__ == "__main__":

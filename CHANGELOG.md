@@ -1,5 +1,10 @@
 # icon-gen-ai – Changelog
 
+## 0.7.0 (2026-05-10)
+
+### Changed
+- **CLI: Migrated from Click to Typer** - Replaced `click` with `typer` as the CLI framework. Commands, options, and arguments are now declared as typed Python function parameters using `typer.Option()` and `typer.Argument()`. `OutputFormat` and `Direction` are defined as `str`/`Enum` classes, replacing `click.Choice`. All `click.echo` / `click.style` calls replaced with `typer.echo` / `typer.style`. Error handling uses `typer.Exit(code=...)` instead of `click.ClickException` / `click.UsageError`. The `--version` callback follows Typer's `bool`-flag pattern. Entry point updated from `cli` to `main()`. `click` removed from dependencies; `typer>=0.12.0` added.
+
 ## 0.6.2 (2026-05-10)
 
 ### Fixed
