@@ -21,7 +21,7 @@ __all__ = [
 
 def is_ai_available() -> bool:
     """Check if AI features are available.
-    
+
     Returns:
         True if at least one LLM provider package is installed
     """
@@ -30,7 +30,7 @@ def is_ai_available() -> bool:
 
 def get_available_providers() -> list:
     """Get list of available LLM providers.
-    
+
     Returns:
         List of provider names that have their required packages installed
     """

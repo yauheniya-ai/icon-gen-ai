@@ -12,6 +12,7 @@ from .animation.webp_exporter import svg_animation_to_webp
 try:
     from PIL import Image, ImageColor
     import cairosvg
+
     RASTER_AVAILABLE = True
 except ImportError:
     RASTER_AVAILABLE = False
@@ -22,12 +23,12 @@ FormatType = Literal["svg", "png", "webp", "ico"]
 
 def parse_color(color: str) -> Tuple[int, int, int]:
     """Parse color string to RGB tuple (supports hex and CSS3 named colors)."""
-    if color.lower() in ('transparent', 'none'):
+    if color.lower() in ("transparent", "none"):
         return (0, 0, 0)
     try:
         rgb = ImageColor.getrgb(color)
         return rgb[:3] if len(rgb) >= 3 else rgb
-    except:
+    except Exception:
         return (255, 255, 255)  # Default to white
 
 
@@ -79,16 +80,16 @@ class IconGenerator:
             return svg_content
         try:
             png_data = cairosvg.svg2png(
-                bytestring=svg_content.encode('utf-8'),
+                bytestring=svg_content.encode("utf-8"),
                 output_width=size,
-                output_height=size
+                output_height=size,
             )
             img = Image.open(BytesIO(png_data)).convert("RGBA")
             width, height = img.size
-            
+
             left_rgb = parse_color(color1)
             right_rgb = parse_color(color2)
-            
+
             pixels = list(img.getdata())
             new_data = []
             for y in range(height):
@@ -99,11 +100,17 @@ class IconGenerator:
                         if direction == "vertical":
                             ratio = y / (height - 1) if height > 1 else 0
                         elif direction == "diagonal":
-                            ratio = (x + y) / (width + height - 2) if (width + height) > 2 else 0
+                            ratio = (
+                                (x + y) / (width + height - 2)
+                                if (width + height) > 2
+                                else 0
+                            )
                         elif direction == "radial":
                             cx, cy = (width - 1) / 2, (height - 1) / 2
-                            max_r = ((cx ** 2 + cy ** 2) ** 0.5) or 1
-                            ratio = min(((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 / max_r, 1.0)
+                            max_r = ((cx**2 + cy**2) ** 0.5) or 1
+                            ratio = min(
+                                ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 / max_r, 1.0
+                            )
                         else:  # horizontal
                             ratio = x / (width - 1) if width > 1 else 0
                         new_r = int(left_rgb[0] * (1 - ratio) + right_rgb[0] * ratio)
@@ -121,51 +128,49 @@ class IconGenerator:
                 for x in range(width):
                     r, g, b, a = new_data[y * width + x]
                     if a > 0:
-                        hex_color = f'#{r:02x}{g:02x}{b:02x}'
+                        hex_color = f"#{r:02x}{g:02x}{b:02x}"
                         opacity = a / 255
                         svg_content_list.append(
                             f'<rect x="{x}" y="{y}" width="1" height="1" '
                             f'fill="{hex_color}" fill-opacity="{opacity:.3f}" />'
                         )
-            svg_footer = '</svg>'
-            return svg_header + '\n'.join(svg_content_list) + svg_footer
+            svg_footer = "</svg>"
+            return svg_header + "\n".join(svg_content_list) + svg_footer
 
         except Exception as e:
             print(f"Error applying gradient via raster: {e}")
             import traceback
+
             traceback.print_exc()
             return svg_content
 
     def recolor_svg_to_single_color(
-        self,
-        svg_content: str,
-        target_color: str,
-        size: int = 256
+        self, svg_content: str, target_color: str, size: int = 256
     ) -> str:
         """Recolor multi-color SVG to single color using raster method."""
         if not RASTER_AVAILABLE:
             print("Cannot recolor SVG: PIL/cairosvg not installed")
             print("Install with: pip install Pillow cairosvg")
             return svg_content
-        
+
         try:
             target_rgb = parse_color(target_color)
-            
+
             # Convert SVG to PNG
             png_data = cairosvg.svg2png(
-                bytestring=svg_content.encode('utf-8'),
+                bytestring=svg_content.encode("utf-8"),
                 output_width=size,
-                output_height=size
+                output_height=size,
             )
-            
+
             # Open as PIL Image
             img = Image.open(BytesIO(png_data)).convert("RGBA")
             width, height = img.size
-            
+
             # Recolor all non-transparent pixels
             pixels = list(img.getdata())
             new_pixels = []
-            is_transparent_color = target_color.lower() in ('transparent', 'none')
+            is_transparent_color = target_color.lower() in ("transparent", "none")
             for r, g, b, a in pixels:
                 if a > 0:  # Non-transparent pixel
                     if is_transparent_color:
@@ -174,20 +179,22 @@ class IconGenerator:
                         new_pixels.append((*target_rgb, a))
                 else:
                     new_pixels.append((r, g, b, a))
-            
+
             img.putdata(new_pixels)
-            
+
             # Convert back to SVG with embedded image
             from base64 import b64encode
+
             buffer = BytesIO()
-            img.save(buffer, format='PNG')
-            img_data = b64encode(buffer.getvalue()).decode('utf-8')
-            
+            img.save(buffer, format="PNG")
+            img_data = b64encode(buffer.getvalue()).decode("utf-8")
+
             return f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">\n<image width="{width}" height="{height}" href="data:image/png;base64,{img_data}" />\n</svg>'
-            
+
         except Exception as e:
             print(f"Error recoloring SVG: {e}")
             import traceback
+
             traceback.print_exc()
             return svg_content
 
@@ -204,31 +211,40 @@ class IconGenerator:
             root = ET.fromstring(wrapped)
 
             def force_black(el):
-                tag = el.tag.split('}')[-1] if '}' in el.tag else el.tag
+                tag = el.tag.split("}")[-1] if "}" in el.tag else el.tag
                 # Skip animation / meta elements
-                if tag in ('animate', 'animateTransform', 'animateMotion', 'set', 'style', 'defs'):
+                if tag in (
+                    "animate",
+                    "animateTransform",
+                    "animateMotion",
+                    "set",
+                    "style",
+                    "defs",
+                ):
                     return
                 # Strip colour-related inline styles so they don't override fill attr
-                if el.get('style'):
-                    style = re.sub(r'fill\s*:[^;]+;?', 'fill:black;', el.get('style'))
-                    style = re.sub(r'stroke\s*:[^;]+;?', 'stroke:black;', style)
-                    el.set('style', style.strip())
+                if el.get("style"):
+                    style = re.sub(r"fill\s*:[^;]+;?", "fill:black;", el.get("style"))
+                    style = re.sub(r"stroke\s*:[^;]+;?", "stroke:black;", style)
+                    el.set("style", style.strip())
                 # Force fill to black unless explicitly none
-                fill = el.get('fill', '')
-                if fill.lower() not in ('none', ''):
-                    el.set('fill', 'black')
-                elif not fill:  # no fill attr at all — set explicitly for non-group elements
-                    if tag not in ('g', 'svg'):
-                        el.set('fill', 'black')
+                fill = el.get("fill", "")
+                if fill.lower() not in ("none", ""):
+                    el.set("fill", "black")
+                elif (
+                    not fill
+                ):  # no fill attr at all — set explicitly for non-group elements
+                    if tag not in ("g", "svg"):
+                        el.set("fill", "black")
                 # Force stroke to black unless explicitly none
-                stroke = el.get('stroke', '')
-                if stroke and stroke.lower() != 'none':
-                    el.set('stroke', 'black')
+                stroke = el.get("stroke", "")
+                if stroke and stroke.lower() != "none":
+                    el.set("stroke", "black")
                 for child in el:
                     force_black(child)
 
             force_black(root)
-            return ''.join(ET.tostring(child, encoding='unicode') for child in root)
+            return "".join(ET.tostring(child, encoding="unicode") for child in root)
         except Exception:
             # Fallback: just return the original (mask will still punch using alpha)
             return icon_elements_str
@@ -283,10 +299,7 @@ class IconGenerator:
 
         outline_attrs = ""
         if outline_width > 0 and outline_color:
-            outline_attrs = (
-                f' stroke="{outline_color}" '
-                f'stroke-width="{outline_width}"'
-            )
+            outline_attrs = f' stroke="{outline_color}" stroke-width="{outline_width}"'
 
         # Icon transform
         icon_scale = size / max(vb_w, vb_h) * scale
@@ -299,10 +312,7 @@ class IconGenerator:
             # the mask works in every renderer including cairosvg, which does NOT
             # support SVG <filter>/feColorMatrix inside masks.
             gradient_inner = (
-                gradient_def
-                .replace("<defs>", "")
-                .replace("</defs>", "")
-                .strip()
+                gradient_def.replace("<defs>", "").replace("</defs>", "").strip()
             )
             icon_transform = (
                 f"translate({tx},{ty}) "
@@ -342,7 +352,7 @@ class IconGenerator:
   <g transform="
       translate({tx},{ty})
       scale({icon_scale})
-      translate({-(vb_x + vb_w/2)},{-(vb_y + vb_h/2)})
+      translate({-(vb_x + vb_w / 2)},{-(vb_y + vb_h / 2)})
   ">
 {icon_elements}
   </g>
@@ -359,11 +369,11 @@ class IconGenerator:
         scale: Optional[float] = None,
     ) -> str:
         """Modify SVG content to apply color, size, and scale.
-        
+
         If color is None, preserves original colors.
         If color is a tuple, applies gradient (loses embedded animations).
         If color is a string, attempts to recolor while preserving animations.
-        
+
         Args:
             preserve_animations: If True, tries to preserve <style>, <animate>, etc.
             scale: Optional scale factor to apply to the icon (e.g., 0.7 for 70%)
@@ -373,7 +383,7 @@ class IconGenerator:
             if color is None:
                 try:
                     root = ET.fromstring(svg_content)
-                    
+
                     # Ensure viewBox exists
                     if not root.get("viewBox"):
                         w = re.sub(r"[^\d.]", "", root.get("width", "24"))
@@ -390,12 +400,15 @@ class IconGenerator:
                         # Wrap content in a scaled group
                         vb = root.get("viewBox", "0 0 24 24").split()
                         vb_x, vb_y, vb_w, vb_h = map(float, vb)
-                        
+
                         # Create wrapper group with transform
                         g = ET.Element("g")
                         cx, cy = vb_w / 2, vb_h / 2
-                        g.set("transform", f"translate({cx},{cy}) scale({scale}) translate({-cx},{-cy})")
-                        
+                        g.set(
+                            "transform",
+                            f"translate({cx},{cy}) scale({scale}) translate({-cx},{-cy})",
+                        )
+
                         # Move all children to the group
                         for child in list(root):
                             root.remove(child)
@@ -406,46 +419,45 @@ class IconGenerator:
                 except Exception as e:
                     print(f"Warning: Could not modify SVG: {e}")
                     return svg_content
-            
+
             # Handle gradient colors - must use raster method (loses animations)
             if isinstance(color, tuple):
                 svg_content = self.apply_gradient_via_raster(
-                    svg_content, 
-                    color[0], 
-                    color[1], 
-                    size or 256,
-                    direction=direction
+                    svg_content, color[0], color[1], size or 256, direction=direction
                 )
-                
+
                 # Apply scale if provided
                 if scale is not None and scale != 1.0:
                     try:
                         root = ET.fromstring(svg_content)
                         vb = root.get("viewBox", "0 0 256 256").split()
                         vb_x, vb_y, vb_w, vb_h = map(float, vb)
-                        
+
                         # Create wrapper group with transform
                         g = ET.Element("g")
                         cx, cy = vb_w / 2, vb_h / 2
-                        g.set("transform", f"translate({cx},{cy}) scale({scale}) translate({-cx},{-cy})")
-                        
+                        g.set(
+                            "transform",
+                            f"translate({cx},{cy}) scale({scale}) translate({-cx},{-cy})",
+                        )
+
                         # Move all children to the group
                         for child in list(root):
                             root.remove(child)
                             g.append(child)
                         root.append(g)
-                        
+
                         return ET.tostring(root, encoding="unicode")
                     except Exception as e:
                         print(f"Warning: Could not apply scale to gradient: {e}")
-                
+
                 return svg_content
-            
+
             # For solid colors with animation preservation
             if color and preserve_animations:
                 try:
                     root = ET.fromstring(svg_content)
-                    
+
                     # Ensure viewBox exists
                     if not root.get("viewBox"):
                         w = re.sub(r"[^\d.]", "", root.get("width", "24"))
@@ -459,94 +471,126 @@ class IconGenerator:
 
                     # ----- REMOVE STYLE FILLS HERE -----
                     for style in root.findall(".//{http://www.w3.org/2000/svg}style"):
-                        if 'fill' in (style.text or ''):
+                        if "fill" in (style.text or ""):
                             root.remove(style)
 
                     # Apply color to fill/stroke attributes (preserves animations)
-                    _is_transparent = color.lower() in ('transparent', 'none')
+                    _is_transparent = color.lower() in ("transparent", "none")
+
                     def apply_color_preserve_animation(el):
-                        tag = el.tag.split('}')[-1] if '}' in el.tag else el.tag
-                        
+                        tag = el.tag.split("}")[-1] if "}" in el.tag else el.tag
+
                         # Skip animation elements
-                        if tag in ('animate', 'animateTransform', 'animateMotion', 'set', 'style'):
+                        if tag in (
+                            "animate",
+                            "animateTransform",
+                            "animateMotion",
+                            "set",
+                            "style",
+                        ):
                             return
-                        
+
                         visual_tags = {
-                            'path', 'circle', 'rect', 'polygon', 'ellipse',
-                            'polyline', 'line', 'text', 'g'
+                            "path",
+                            "circle",
+                            "rect",
+                            "polygon",
+                            "ellipse",
+                            "polyline",
+                            "line",
+                            "text",
+                            "g",
                         }
-                        
+
                         if tag in visual_tags:
                             if _is_transparent:
                                 # Make the icon invisible (transparent / cutout)
-                                el.set('fill', 'none')
-                                if el.get('stroke'):
-                                    el.set('stroke', 'none')
+                                el.set("fill", "none")
+                                if el.get("stroke"):
+                                    el.set("stroke", "none")
                             else:
-                                current_fill = el.get('fill', '')
-                                if current_fill and current_fill.lower() not in ('none', 'transparent', 'currentcolor'):
-                                    el.set('fill', color)
-                                elif not current_fill and tag != 'g':
-                                    el.set('fill', color)
-                                
-                                if el.get('stroke') and el.get('stroke').lower() not in ('none', 'transparent'):
-                                    el.set('stroke', color)
-                        
+                                current_fill = el.get("fill", "")
+                                if current_fill and current_fill.lower() not in (
+                                    "none",
+                                    "transparent",
+                                    "currentcolor",
+                                ):
+                                    el.set("fill", color)
+                                elif not current_fill and tag != "g":
+                                    el.set("fill", color)
+
+                                if el.get("stroke") and el.get(
+                                    "stroke"
+                                ).lower() not in ("none", "transparent"):
+                                    el.set("stroke", color)
+
                         for child in el:
                             apply_color_preserve_animation(child)
-                    
+
                     apply_color_preserve_animation(root)
-                    
+
                     # Apply scale if provided and no background will be added
                     if scale is not None and scale != 1.0:
                         # Wrap content in a scaled group
                         vb = root.get("viewBox", "0 0 24 24").split()
                         vb_x, vb_y, vb_w, vb_h = map(float, vb)
-                        
+
                         # Create wrapper group with transform
                         g = ET.Element("g")
                         cx, cy = vb_w / 2, vb_h / 2
-                        g.set("transform", f"translate({cx},{cy}) scale({scale}) translate({-cx},{-cy})")
-                        
+                        g.set(
+                            "transform",
+                            f"translate({cx},{cy}) scale({scale}) translate({-cx},{-cy})",
+                        )
+
                         # Move all children to the group
                         for child in list(root):
                             root.remove(child)
                             g.append(child)
                         root.append(g)
-                    
+
                     return ET.tostring(root, encoding="unicode")
-                    
+
                 except Exception as e:
-                    print(f"Warning: Could not apply color with animation preservation: {e}")
+                    print(
+                        f"Warning: Could not apply color with animation preservation: {e}"
+                    )
                     # Fall back to raster method if XML manipulation fails
-                    return self.recolor_svg_to_single_color(svg_content, color, size or 256)
-            
+                    return self.recolor_svg_to_single_color(
+                        svg_content, color, size or 256
+                    )
+
             # For solid colors without animation preservation (multi-color recoloring)
             if color:
                 return self.recolor_svg_to_single_color(svg_content, color, size or 256)
-        
+
         except Exception as e:
             print(f"Warning: Could not modify SVG: {e}")
             return svg_content
 
     # -------------------- LOCAL FILE --------------------
-    def load_local_file(self, file_path: str, target_color: Optional[str] = None, target_size: Optional[int] = None) -> Optional[tuple[str, bool]]:
+    def load_local_file(
+        self,
+        file_path: str,
+        target_color: Optional[str] = None,
+        target_size: Optional[int] = None,
+    ) -> Optional[tuple[str, bool]]:
         """Load local image file. Returns (svg_content, is_raster_image).
-        
+
         For raster images, if target_color is provided, recolors during load.
         If target_size is provided, resizes the image.
         Returns a tuple: (svg_content, is_raster_image)
         """
         file_path = Path(file_path)
         is_jpeg = file_path.suffix.lower() in (".jpg", ".jpeg")
-        
+
         if not file_path.exists():
             print(f"Error: File not found: {file_path}")
             return None
 
-        if file_path.suffix.lower() == '.svg':
+        if file_path.suffix.lower() == ".svg":
             try:
-                svg_content = file_path.read_text(encoding='utf-8')
+                svg_content = file_path.read_text(encoding="utf-8")
                 return (svg_content, False)  # Not a raster image
             except Exception as e:
                 print(f"Error reading SVG file {file_path}: {e}")
@@ -558,7 +602,7 @@ class IconGenerator:
 
         try:
             img = Image.open(file_path).convert("RGBA")
-            
+
             # Resize if requested: preserve aspect ratio and fit within target_size
             orig_w, orig_h = img.size
             if target_size:
@@ -569,7 +613,7 @@ class IconGenerator:
                     img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
             width, height = img.size
-            
+
             # Apply color transformation if requested (only for solid colors, not gradients)
             if target_color:
                 if is_jpeg:
@@ -589,9 +633,10 @@ class IconGenerator:
                     img.putdata(new_pixels)
 
             from base64 import b64encode
+
             buffer = BytesIO()
-            img.save(buffer, format='PNG')
-            img_data = b64encode(buffer.getvalue()).decode('utf-8')
+            img.save(buffer, format="PNG")
+            img_data = b64encode(buffer.getvalue()).decode("utf-8")
 
             svg_content = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">\n<image width="{width}" height="{height}" href="data:image/png;base64,{img_data}" />\n</svg>'
             return (svg_content, True)  # Is a raster image
@@ -599,11 +644,14 @@ class IconGenerator:
         except Exception as e:
             print(f"Error converting {file_path} to SVG: {e}")
             import traceback
+
             traceback.print_exc()
             return None
 
     # -------------------- FETCH ICONS --------------------
-    def get_icon_from_url(self, url: str, target_size: Optional[int] = None) -> Optional[tuple[str, bool]]:
+    def get_icon_from_url(
+        self, url: str, target_size: Optional[int] = None
+    ) -> Optional[tuple[str, bool]]:
         """Fetch an icon from a direct URL.
 
         Returns a tuple (svg_content, is_raster_image).
@@ -618,21 +666,23 @@ class IconGenerator:
             content_type = r.headers.get("Content-Type", "")
 
             # SVG content
-            if 'svg' in content_type or url.lower().endswith('.svg'):
+            if "svg" in content_type or url.lower().endswith(".svg"):
                 try:
                     return (r.text, False)
                 except Exception:
-                    return (r.content.decode('utf-8', errors='replace'), False)
+                    return (r.content.decode("utf-8", errors="replace"), False)
 
             # Raster content (png, jpeg, webp, etc.) - embed as data URI inside an SVG
-            if content_type.startswith('image/') or any(url.lower().endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.webp')):
+            if content_type.startswith("image/") or any(
+                url.lower().endswith(ext) for ext in (".png", ".jpg", ".jpeg", ".webp")
+            ):
                 data = r.content
                 from base64 import b64encode
 
                 # If we can, open and optionally resize the image to the target size
                 if RASTER_AVAILABLE:
                     try:
-                        img = Image.open(BytesIO(data)).convert('RGBA')
+                        img = Image.open(BytesIO(data)).convert("RGBA")
                         # If a target_size was requested, resize to fit within that size
                         # while preserving original aspect ratio (do not force a square).
                         orig_w, orig_h = img.size
@@ -641,28 +691,38 @@ class IconGenerator:
                             if ratio < 1:
                                 new_w = max(1, int(round(orig_w * ratio)))
                                 new_h = max(1, int(round(orig_h * ratio)))
-                                img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                                img = img.resize(
+                                    (new_w, new_h), Image.Resampling.LANCZOS
+                                )
                         width, height = img.size
 
                         # Re-encode as PNG for consistent embedding
                         buf = BytesIO()
-                        img.save(buf, format='PNG')
-                        b64 = b64encode(buf.getvalue()).decode('utf-8')
-                        subtype = 'png'
+                        img.save(buf, format="PNG")
+                        b64 = b64encode(buf.getvalue()).decode("utf-8")
+                        subtype = "png"
                     except Exception:
                         # Fallback to original bytes if PIL processing fails
-                        subtype = content_type.split('/')[-1].split(';')[0] if '/' in content_type else 'png'
-                        b64 = b64encode(data).decode('utf-8')
+                        subtype = (
+                            content_type.split("/")[-1].split(";")[0]
+                            if "/" in content_type
+                            else "png"
+                        )
+                        b64 = b64encode(data).decode("utf-8")
                         width = height = target_size or 256
                 else:
-                    subtype = content_type.split('/')[-1].split(';')[0] if '/' in content_type else 'png'
-                    b64 = b64encode(data).decode('utf-8')
+                    subtype = (
+                        content_type.split("/")[-1].split(";")[0]
+                        if "/" in content_type
+                        else "png"
+                    )
+                    b64 = b64encode(data).decode("utf-8")
                     width = height = target_size or 256
 
                 svg_content = (
                     f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">\n'
                     f'<image width="{width}" height="{height}" href="data:image/{subtype};base64,{b64}" />\n'
-                    '</svg>'
+                    "</svg>"
                 )
                 return (svg_content, True)
 
@@ -672,9 +732,15 @@ class IconGenerator:
             print(f"Error fetching from URL {url}: {e}")
             return None
 
-    def get_icon_svg(self, icon_name: str, color: str = "currentColor") -> Optional[str]:
+    def get_icon_svg(
+        self, icon_name: str, color: str = "currentColor"
+    ) -> Optional[str]:
         try:
-            r = requests.get(f"{self.ICONIFY_API}/{icon_name}.svg", params={"color":color}, timeout=10)
+            r = requests.get(
+                f"{self.ICONIFY_API}/{icon_name}.svg",
+                params={"color": color},
+                timeout=10,
+            )
             r.raise_for_status()
             return r.text
         except Exception as e:
@@ -690,7 +756,9 @@ class IconGenerator:
             print(f"Error saving {output_path}: {e}")
             return False
 
-    def generate_ico(self, svg_content: str, output_path: Path, size: int = 256) -> Path:
+    def generate_ico(
+        self, svg_content: str, output_path: Path, size: int = 256
+    ) -> Path:
         """Generate ICO from SVG."""
         png_bytes = cairosvg.svg2png(
             bytestring=svg_content.encode("utf-8"),
@@ -723,14 +791,16 @@ class IconGenerator:
     ) -> Optional[Path]:
         size = size or 256
         is_raster_source = False
-        
+
         # Determine effective scale based on whether background will be applied
         # Default: 0.7 (70%) if bg is present, 1.0 (100%) if no bg
-        has_background = (bg_color is not None or border_radius > 0 or outline_width > 0)
-        effective_scale = scale if scale is not None else (0.7 if has_background else 1.0)
+        has_background = bg_color is not None or border_radius > 0 or outline_width > 0
+        effective_scale = (
+            scale if scale is not None else (0.7 if has_background else 1.0)
+        )
         is_cutout = (
             isinstance(color, str)
-            and color.strip().lower() in ('transparent', 'none')
+            and color.strip().lower() in ("transparent", "none")
             and has_background
         )
 
@@ -738,30 +808,30 @@ class IconGenerator:
             # Check if it's a JPEG and color is requested
             file_path = Path(local_file)
             is_jpeg = file_path.suffix.lower() in (".jpg", ".jpeg")
-            
+
             if is_jpeg and color:
                 print(
                     "Error: JPEG images do not support recoloring. "
                     "Please use SVG, PNG or WebP images with transparency to apply colors."
                 )
                 return None
-            
+
             # Don't pass gradient colors to load_local_file - it only handles solid colors
             # Also don't pass transparent/cutout color - we handle that at the wrapping stage
-            solid_color = color if (color and not isinstance(color, tuple) and not is_cutout) else None
+            solid_color = (
+                color
+                if (color and not isinstance(color, tuple) and not is_cutout)
+                else None
+            )
             result = self.load_local_file(local_file, solid_color, size)
             if result is None:
                 return None
             svg_content, is_raster_source = result
-            
+
             # If color is a gradient and it's a raster source, apply gradient now
             if isinstance(color, tuple) and is_raster_source:
                 svg_content = self.apply_gradient_via_raster(
-                    svg_content, 
-                    color[0], 
-                    color[1], 
-                    size, 
-                    direction=direction
+                    svg_content, color[0], color[1], size, direction=direction
                 )
 
         elif direct_url:
@@ -781,10 +851,17 @@ class IconGenerator:
                 )
 
         elif icon_name:
-            fetch_color = "black" if (
-                isinstance(color, tuple) or
-                (isinstance(color, str) and color.lower() in ('transparent', 'none'))
-            ) else (color or "currentColor")
+            fetch_color = (
+                "black"
+                if (
+                    isinstance(color, tuple)
+                    or (
+                        isinstance(color, str)
+                        and color.lower() in ("transparent", "none")
+                    )
+                )
+                else (color or "currentColor")
+            )
             svg_content = self.get_icon_svg(icon_name, fetch_color)
 
         else:
@@ -861,7 +938,9 @@ class IconGenerator:
 
         elif format in ("png", "webp", "jpg", "jpeg"):
             if not RASTER_AVAILABLE:
-                print("Error: PIL/cairosvg not available. Cannot generate raster formats.")
+                print(
+                    "Error: PIL/cairosvg not available. Cannot generate raster formats."
+                )
                 return None
 
             # For cutout mode cairosvg does not reliably render SVG <mask> elements,
@@ -875,25 +954,37 @@ class IconGenerator:
                 # Icon centred/scaled the same way as in the background composite,
                 # but rendered on a transparent canvas
                 icon_positioned_svg = self.wrap_with_background(
-                    svg_before_bg, size,
-                    bg_color=None, border_radius=0, outline_width=0,
-                    scale=effective_scale, cutout=False,
+                    svg_before_bg,
+                    size,
+                    bg_color=None,
+                    border_radius=0,
+                    outline_width=0,
+                    scale=effective_scale,
+                    cutout=False,
                 )
                 # Background-only SVG: use a 1 px transparent placeholder icon so
                 # the rect geometry (border-radius, outline, gradient) is identical
                 bg_only_svg = self.wrap_with_background(
                     '<svg xmlns="http://www.w3.org/2000/svg" '
                     'viewBox="0 0 1 1" width="1" height="1"/>',
-                    size, bg_color, border_radius, outline_width, outline_color,
-                    bg_direction=bg_direction, scale=effective_scale, cutout=False,
+                    size,
+                    bg_color,
+                    border_radius,
+                    outline_width,
+                    outline_color,
+                    bg_direction=bg_direction,
+                    scale=effective_scale,
+                    cutout=False,
                 )
                 icon_bytes_raw = cairosvg.svg2png(
-                    bytestring=icon_positioned_svg.encode('utf-8'),
-                    output_width=size, output_height=size,
+                    bytestring=icon_positioned_svg.encode("utf-8"),
+                    output_width=size,
+                    output_height=size,
                 )
                 bg_bytes_raw = cairosvg.svg2png(
-                    bytestring=bg_only_svg.encode('utf-8'),
-                    output_width=size, output_height=size,
+                    bytestring=bg_only_svg.encode("utf-8"),
+                    output_width=size,
+                    output_height=size,
                 )
                 bg_img = Image.open(BytesIO(bg_bytes_raw)).convert("RGBA")
                 icon_img = Image.open(BytesIO(icon_bytes_raw)).convert("RGBA")
@@ -905,19 +996,19 @@ class IconGenerator:
                 new_alpha = ImageChops.multiply(bg_a, inv_icon_a)
                 result_img = Image.merge("RGBA", (r, g, b, new_alpha))
                 buf = BytesIO()
-                result_img.save(buf, format='PNG')
+                result_img.save(buf, format="PNG")
                 png_bytes = buf.getvalue()
             else:
                 # Convert SVG to PNG bytes
                 png_bytes = cairosvg.svg2png(
-                    bytestring=svg_content.encode('utf-8'),
+                    bytestring=svg_content.encode("utf-8"),
                     output_width=size,
                     output_height=size,
                 )
-            
+
             if format == "png":
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_path, 'wb') as f:
+                with open(output_path, "wb") as f:
                     f.write(png_bytes)
                 return output_path
             # Handle other raster formats
@@ -929,7 +1020,7 @@ class IconGenerator:
                     rgb_image.paste(image, mask=image.split()[3])  # Use alpha as mask
                     image = rgb_image
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                image.save(output_path, format='JPEG', quality=95)
+                image.save(output_path, format="JPEG", quality=95)
                 image.close()
                 return output_path
 
@@ -942,12 +1033,12 @@ class IconGenerator:
                     # let the exporter composite the background so transforms
                     # and centering are handled consistently.
                     src_svg_for_export = svg_before_bg or svg_content
-                    
+
                     # Important: if no background, scale was already applied in modify_svg,
                     # so pass scale=1.0 to avoid double-scaling. If there's a background,
                     # wrap_with_background will handle it, so pass effective_scale.
                     webp_scale = 1.0 if not has_background else effective_scale
-                    
+
                     result = svg_animation_to_webp(
                         src_svg_for_export,
                         output_path,
@@ -970,7 +1061,7 @@ class IconGenerator:
                 # Fallback: static webp from single-frame PNG
                 image = Image.open(BytesIO(png_bytes))
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                image.save(output_path, format='WEBP', quality=95)
+                image.save(output_path, format="WEBP", quality=95)
                 image.close()
                 return output_path
 

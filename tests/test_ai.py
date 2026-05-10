@@ -21,30 +21,28 @@ def test_get_available_providers():
 def test_icon_assistant_import():
     """Test IconAssistant can be imported when AI is available."""
     from icon_gen_ai import IconAssistant
+
     assert IconAssistant is not None
 
 
 def test_base_llm_provider():
     """Test base LLM provider classes."""
     from icon_gen_ai.ai.base import IconSuggestion, LLMResponse
-    
+
     suggestion = IconSuggestion(
-        icon_name='mdi:test',
-        reason='Test reason',
-        use_case='Testing',
-        confidence=0.9
+        icon_name="mdi:test", reason="Test reason", use_case="Testing", confidence=0.9
     )
-    
-    assert suggestion.icon_name == 'mdi:test'
+
+    assert suggestion.icon_name == "mdi:test"
     assert suggestion.confidence == 0.9
-    
+
     response = LLMResponse(
         suggestions=[suggestion],
-        explanation='Test explanation',
-        search_query='test query',
+        explanation="Test explanation",
+        search_query="test query",
         tokens_used=100,
-        provider='test'
+        provider="test",
     )
-    
+
     assert len(response.suggestions) == 1
     assert response.tokens_used == 100

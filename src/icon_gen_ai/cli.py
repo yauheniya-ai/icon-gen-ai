@@ -11,6 +11,7 @@ VERSION = version("icon-gen-ai")
 
 # -------------------- HELPERS --------------------
 
+
 def is_url(value: str) -> bool:
     parsed = urlparse(value)
     return parsed.scheme in ("http", "https")
@@ -34,9 +35,9 @@ def parse_color(value: str | None, label: str):
 # -------------------- CLI --------------------
 
 # Color palette
-SLATEBLUE = (123, 104, 238)   # mediumslateblue
-DEEPPINK   = (255,  20, 147)  # deeppink
-SKYBLUE    = (  0, 191, 255)  # deepskyblue
+SLATEBLUE = (123, 104, 238)  # mediumslateblue
+DEEPPINK = (255, 20, 147)  # deeppink
+SKYBLUE = (0, 191, 255)  # deepskyblue
 
 BANNER = """\
  +-+-+-+-+-+-+-+-+-+-+-+
@@ -44,40 +45,76 @@ BANNER = """\
  +-+-+-+-+-+-+-+-+-+-+-+
 """
 
+
 def _label(text: str) -> str:
     """Deepskyblue label."""
     return click.style(text, fg=SKYBLUE)
+
 
 def _value(text: str) -> str:
     """Bold white value."""
     return click.style(str(text), bold=True)
 
+
 def _ok(text: str) -> str:
     """Mediumslateblue success marker."""
     return click.style(text, fg=SLATEBLUE, bold=True)
+
 
 def _warn(text: str) -> str:
     """Deeppink warning/error marker."""
     return click.style(text, fg=DEEPPINK, bold=True)
 
+
 def _muted(text: str) -> str:
     return click.style(text, fg=SKYBLUE)
 
 
+def _dim(text: str) -> str:
+    return click.style(text, dim=True)
+
+
 def _print_help():
-    click.echo(click.style("  Generate pixel-perfect icons from Iconify, URLs, and local files.", fg=SKYBLUE))
+    click.echo(
+        click.style(
+            "  Generate pixel-perfect icons from Iconify, URLs, and local files.",
+            fg=SKYBLUE,
+        )
+    )
     click.echo("")
     click.echo(click.style("Usage:", fg=DEEPPINK, bold=True))
-    click.echo(f"  icon-gen-ai " + click.style("[OPTIONS]", fg=SLATEBLUE) + " " + click.style("COMMAND", fg=SKYBLUE, bold=True) + " [ARGS]...")
+    click.echo(
+        "  icon-gen-ai "
+        + click.style("[OPTIONS]", fg=SLATEBLUE)
+        + " "
+        + click.style("COMMAND", fg=SKYBLUE, bold=True)
+        + " [ARGS]..."
+    )
     click.echo("")
     click.echo(click.style("Options:", fg=DEEPPINK, bold=True))
-    click.echo("  " + click.style("--version", fg=SLATEBLUE) + "  Show the version and exit.")
-    click.echo("  " + click.style("--help   ", fg=SLATEBLUE) + "  Show this message and exit.")
+    click.echo(
+        "  " + click.style("--version", fg=SLATEBLUE) + "  Show the version and exit."
+    )
+    click.echo(
+        "  " + click.style("--help   ", fg=SLATEBLUE) + "  Show this message and exit."
+    )
     click.echo("")
     click.echo(click.style("Commands:", fg=DEEPPINK, bold=True))
-    click.echo("  " + click.style("generate ", fg=SKYBLUE, bold=True) + "  Generate icons from Iconify or local files.")
-    click.echo("  " + click.style("search   ", fg=SKYBLUE, bold=True) + "  Search for icons using AI-powered natural language queries.")
-    click.echo("  " + click.style("providers", fg=SKYBLUE, bold=True) + "  Show AI provider status.")
+    click.echo(
+        "  "
+        + click.style("generate ", fg=SKYBLUE, bold=True)
+        + "  Generate icons from Iconify or local files."
+    )
+    click.echo(
+        "  "
+        + click.style("search   ", fg=SKYBLUE, bold=True)
+        + "  Search for icons using AI-powered natural language queries."
+    )
+    click.echo(
+        "  "
+        + click.style("providers", fg=SKYBLUE, bold=True)
+        + "  Show AI provider status."
+    )
     click.echo("")
 
 
@@ -106,10 +143,22 @@ def _help_callback(ctx, _param, value):
 
 
 @click.group(invoke_without_command=True)
-@click.option("--version", is_flag=True, is_eager=True, expose_value=False,
-              callback=_version_callback, help="Show the version and exit.")
-@click.option("--help", is_flag=True, is_eager=True, expose_value=False,
-              callback=_help_callback, help="Show this message and exit.")
+@click.option(
+    "--version",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_version_callback,
+    help="Show the version and exit.",
+)
+@click.option(
+    "--help",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_help_callback,
+    help="Show this message and exit.",
+)
 @click.pass_context
 def cli(ctx):
     """icon-gen-ai — generate icons from Iconify, URLs, or local files."""
@@ -120,21 +169,41 @@ def cli(ctx):
 
 # -------------------- GENERATE --------------------
 
+
 @cli.command()
 @click.argument("icon", required=False)
 @click.option("-i", "--input", "input_file", help="Local image file or direct URL")
 @click.option("-o", "--output", help="Output file path")
 @click.option("--format", default="svg", type=click.Choice(["svg", "png", "webp"]))
 @click.option("--size", default=256, show_default=True)
-@click.option("--scale", type=float, help="Icon scale (0.0-1.0). Default: 1.0 without bg, 0.7 with bg")
+@click.option(
+    "--scale",
+    type=float,
+    help="Icon scale (0.0-1.0). Default: 1.0 without bg, 0.7 with bg",
+)
 @click.option("--color", help="Icon color or gradient '(c1,c2)'")
-@click.option("--direction", default="horizontal", type=click.Choice(["horizontal", "vertical", "diagonal", "radial"]), show_default=True, help="Icon gradient direction")
+@click.option(
+    "--direction",
+    default="horizontal",
+    type=click.Choice(["horizontal", "vertical", "diagonal", "radial"]),
+    show_default=True,
+    help="Icon gradient direction",
+)
 @click.option("--bg-color", help="Background color or gradient '(c1,c2)'")
-@click.option("--bg-direction", default="horizontal", type=click.Choice(["horizontal", "vertical", "diagonal", "radial"]), show_default=True, help="Background gradient direction")
+@click.option(
+    "--bg-direction",
+    default="horizontal",
+    type=click.Choice(["horizontal", "vertical", "diagonal", "radial"]),
+    show_default=True,
+    help="Background gradient direction",
+)
 @click.option("--border-radius", default=0, show_default=True)
 @click.option("--outline-width", default=0, show_default=True)
 @click.option("--outline-color", help="Outline color")
-@click.option("--animation", help="Animation preset e.g. 'spin:2s', 'pulse:1.5s', 'flip-h:1s', 'flip-v:1s'")
+@click.option(
+    "--animation",
+    help="Animation preset e.g. 'spin:2s', 'pulse:1.5s', 'flip-h:1s', 'flip-v:1s'",
+)
 def generate(
     icon,
     input_file,
@@ -188,7 +257,11 @@ def generate(
 
     if input_file:
         # Check if it's an Iconify icon name (contains colon)
-        if ':' in input_file and not is_url(input_file) and not os.path.exists(input_file):
+        if (
+            ":" in input_file
+            and not is_url(input_file)
+            and not os.path.exists(input_file)
+        ):
             # It's an Iconify icon name used with -i flag
             icon_name = input_file
             input_file = None
@@ -211,8 +284,8 @@ def generate(
         output_name = output_path.stem
         # Infer format from extension if output path is specified
         if output_path.suffix:
-            inferred_format = output_path.suffix.lstrip('.')
-            if inferred_format in ['svg', 'png', 'webp', 'ico']:
+            inferred_format = output_path.suffix.lstrip(".")
+            if inferred_format in ["svg", "png", "webp", "ico"]:
                 format = inferred_format
     elif local_file:
         output_name = Path(local_file).stem
@@ -233,7 +306,9 @@ def generate(
     click.echo(f"  {_label('Border radius')} {_value(str(border_radius) + 'px')}")
     click.echo(f"  {_label('Animation')}     {_value(animation or 'none')}")
     if outline_width > 0:
-        click.echo(f"  {_label('Outline')}       {_value(str(outline_width) + 'px')} {_muted('(' + str(outline_color) + ')')}")
+        click.echo(
+            f"  {_label('Outline')}       {_value(str(outline_width) + 'px')} {_muted('(' + str(outline_color) + ')')}"
+        )
 
     result = generator.generate_icon(
         icon_name=icon_name,
@@ -256,31 +331,42 @@ def generate(
     if not result:
         raise click.ClickException("Failed to generate icon")
 
-    click.echo("\n" + _ok("✓ Saved to ") + click.style(str(result), fg=SKYBLUE, underline=True) + "\n")
+    click.echo(
+        "\n"
+        + _ok("✓ Saved to ")
+        + click.style(str(result), fg=SKYBLUE, underline=True)
+        + "\n"
+    )
 
 
 # -------------------- SEARCH --------------------
 
+
 @cli.command()
 @click.argument("query")
-@click.option("-c", "--count", type=int, help="Limit number of results to display (overrides LLM response)")
+@click.option(
+    "-c",
+    "--count",
+    type=int,
+    help="Limit number of results to display (overrides LLM response)",
+)
 @click.option("-g", "--generate", is_flag=True, help="Generate icon files")
 @click.option("--style", help="Design style (modern, corporate, minimal, playful)")
 @click.option("--project-type", help="Project type for context")
 def search(query, count, generate, style, project_type):
     """Search for icons using AI-powered natural language queries.
-    
+
     The AI parses the count from your query (e.g., "5 icons for payment").
     Use -c to limit/truncate the results shown.
-    
+
     Examples:
-    
+
         icon-gen-ai search "payment icons for checkout"
-        
+
         icon-gen-ai search "suggest 10 icons for drone" --style modern
-        
+
         icon-gen-ai search "social media icons" -c 5 --generate
-    
+
     Requires: pip install icon-gen-ai[ai] and ANTHROPIC_API_KEY, HF_TOKEN, or OPENAI_API_KEY
     """
 
@@ -288,8 +374,9 @@ def search(query, count, generate, style, project_type):
         from .ai import IconAssistant, get_available_providers
     except ImportError:
         raise click.ClickException(
-            _warn('AI features not installed.') + ' Run: ' +
-            click.style('pip install "icon-gen-ai[ai]"', fg=SLATEBLUE)
+            _warn("AI features not installed.")
+            + " Run: "
+            + click.style('pip install "icon-gen-ai[ai]"', fg=SLATEBLUE)
         )
 
     providers = get_available_providers()
@@ -321,10 +408,16 @@ def search(query, count, generate, style, project_type):
     response = assistant.discover_icons(query, context=context)
 
     # Truncate to user-specified count or show all (max 25)
-    display_count = min(count, len(response.suggestions)) if count else min(25, len(response.suggestions))
-    
+    display_count = (
+        min(count, len(response.suggestions))
+        if count
+        else min(25, len(response.suggestions))
+    )
+
     for i, s in enumerate(response.suggestions[:display_count], 1):
-        click.echo(click.style(f"  {i}. ", fg=DEEPPINK, bold=True) + _value(s.icon_name))
+        click.echo(
+            click.style(f"  {i}. ", fg=DEEPPINK, bold=True) + _value(s.icon_name)
+        )
         click.echo(_muted(f"     {s.reason}") + "\n")
 
     if not generate:
@@ -346,6 +439,7 @@ def search(query, count, generate, style, project_type):
 
 
 # -------------------- PROVIDERS --------------------
+
 
 @cli.command()
 def providers():
@@ -377,13 +471,18 @@ def providers():
 
     click.echo("")
     click.echo(_ok("✓ ") + _label("AI extras installed"))
-    click.echo(_ok("✓ ") + _label("Available providers: ") + _value(", ".join(providers_list)))
+    click.echo(
+        _ok("✓ ") + _label("Available providers: ") + _value(", ".join(providers_list))
+    )
 
     assistant = IconAssistant()
     if assistant.is_available():
         click.echo(
-            _ok("✓ ") + _label("Active provider:    ")
-            + click.style(assistant.provider.get_provider_name(), fg=DEEPPINK, bold=True)
+            _ok("✓ ")
+            + _label("Active provider:    ")
+            + click.style(
+                assistant.provider.get_provider_name(), fg=DEEPPINK, bold=True
+            )
             + _muted(f" ({assistant.provider.model})")
             + "\n"
         )
@@ -400,12 +499,13 @@ def providers():
 def main(args=None):
     """
     Entry point for console_scripts and testing.
-    
+
     Args:
         args (list[str], optional): Command-line arguments to pass to Click CLI.
     """
     # If args is None, Click will use sys.argv by default
     cli(args=args)
+
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,18 @@
 # icon-gen-ai – Changelog
 
+## 0.6.2 (2026-05-10)
+
+### Fixed
+- **CLI: Added missing `_dim()` helper** - `_dim()` was referenced in `providers` and `search` command output but never defined, causing `F821` (undefined name) errors at runtime
+- **Generator: Bare `except` clause** - Changed bare `except:` to `except Exception:` in `parse_color()` for safer error handling
+- **Animator: Removed dead code** - Removed unused `v1` variable assignments in the flip animation path (values were computed but never referenced)
+- **Tests: Fixed `test_cli_group` assertion** - Updated assertion to match actual CLI output (`'icons from Iconify'` instead of `'generate icons from Iconify'`)
+
+### Changed
+- **Dev tooling: Replaced `black` with `ruff format`** - Removed `black` from dev dependencies; `ruff format` is fully Black-compatible and consolidates formatting and linting into a single tool
+- **Code quality: Removed unused imports** - Cleaned up unused imports across test files (`pytest`, `re`, `Path`, `List`, `Union`, etc.) and src modules via `ruff --fix`
+- **`__init__.py`: Intentional imports marked with `noqa`** - Post-`_check_deps()` import and optional AI imports annotated to silence E402/F401 for intentional patterns
+
 ## 0.6.1 (2026-05-03)
 
 ### Changed

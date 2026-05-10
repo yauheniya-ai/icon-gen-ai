@@ -334,8 +334,8 @@ MIT License – see <a href="https://github.com/yauheniya-ai/icon-gen-ai/blob/ma
 Contributions are welcome!
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-change`)
-3. Make your changes
+2. Create a feature branch (`git checkout -b feature/my-change`) and make your changes
+3. Run the test suite: `pytest --cov=src --cov-report=term-missing`
 4. Format and lint: `ruff format src/ tests/ && ruff check src/ tests/`
-5. Run the test suite: `pytest --cov=src --cov-report=term-missing`
+5. Update the documentation
 6. Submit a pull request

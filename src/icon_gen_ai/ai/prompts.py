@@ -70,56 +70,58 @@ STYLE_RECOMMENDATIONS = {
     "modern": {
         "collections": ["heroicons", "lucide", "tabler"],
         "colors": ["#6366f1", "#8b5cf6", "#ec4899"],
-        "border_radius": 24
+        "border_radius": 24,
     },
     "corporate": {
         "collections": ["mdi", "fa6-solid"],
         "colors": ["#1e40af", "#047857", "#dc2626"],
-        "border_radius": 8
+        "border_radius": 8,
     },
     "minimal": {
         "collections": ["heroicons", "lucide"],
         "colors": ["#000000", "#ffffff", "#6b7280"],
-        "border_radius": 0
+        "border_radius": 0,
     },
     "playful": {
         "collections": ["mdi", "fa6-solid"],
         "colors": ["#f59e0b", "#10b981", "#3b82f6"],
-        "border_radius": 128  # Circular
-    }
+        "border_radius": 128,  # Circular
+    },
 }
+
 
 def get_enhanced_prompt(user_query: str, context: dict = None) -> str:
     """Generate an enhanced prompt with context.
-    
+
     Args:etc.
-        
+
     Returns:
         Enhanced prompt string
     """
     base_prompt = f"User request: {user_query}\n\n"
-    
+
     if context:
         base_prompt += "Context:\n"
         for key, value in context.items():
             if value:
                 base_prompt += f"- {key}: {value}\n"
         base_prompt += "\n"
-    
+
     # Add relevant examples
     for use_case, examples in USE_CASE_EXAMPLES.items():
         if use_case.lower() in user_query.lower():
             base_prompt += f"Relevant examples for {use_case}: {examples}\n\n"
-    
+
     return base_prompt
+
 
 def get_style_recommendations(style: str) -> dict:
     """Get style recommendations for a given design style.
-    
+
     Args:
         style: Design style (e.g., 'modern', 'corporate', 'minimal', 'playful')
-        
+
     Returns:
         Dictionary with style recommendations
     """
-    return STYLE_RECOMMENDATIONS.get(style.lower(), STYLE_RECOMMENDATIONS['modern'])
+    return STYLE_RECOMMENDATIONS.get(style.lower(), STYLE_RECOMMENDATIONS["modern"])

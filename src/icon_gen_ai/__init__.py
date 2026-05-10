@@ -4,6 +4,7 @@ from importlib.metadata import version
 
 __version__ = version("icon-gen-ai")
 
+
 def _check_deps():
     try:
         import requests
@@ -26,15 +27,17 @@ def _check_deps():
             "  pip install -U requests urllib3\n"
         )
 
+
 _check_deps()
 
-from .generator import IconGenerator
+from .generator import IconGenerator  # noqa: E402
 
 __all__ = ["IconGenerator"]
 
 # AI features (optional)
 try:
-    from .ai import IconAssistant, is_ai_available, get_available_providers
+    from .ai import IconAssistant, is_ai_available, get_available_providers  # noqa: F401
+
     __all__.extend(["IconAssistant", "is_ai_available", "get_available_providers"])
     AI_AVAILABLE = True
 except ImportError:
