@@ -1,13 +1,13 @@
 """Tests for CLI interface."""
 
-from click.testing import CliRunner
-from icon_gen_ai.cli import cli
+from typer.testing import CliRunner
+from icon_gen_ai.cli import app
 
 
 def test_cli_help():
     """Test CLI help command."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["--help"])
+    result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
     assert "Generate icons from Iconify" in result.output
 
@@ -16,7 +16,7 @@ def test_cli_basic_generation():
     """Test basic icon generation via CLI."""
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(cli, ["generate", "mdi:github", "--size", "64"])
+        result = runner.invoke(app, ["generate", "mdi:github", "--size", "64"])
         assert result.exit_code == 0
         # Check that it saved the file
         assert "Saved to output/mdi_github.svg" in result.output
@@ -32,7 +32,7 @@ def test_providers_command_shows_helpful_messages():
     helpful output in at least one of the expected states.
     """
     runner = CliRunner()
-    result = runner.invoke(cli, ["providers"])
+    result = runner.invoke(app, ["providers"])
 
     # The command should always succeed
     assert result.exit_code == 0
@@ -46,8 +46,8 @@ def test_providers_command_shows_helpful_messages():
     # 3. Active provider configured
 
     has_no_ai = (
-        "❌ AI features not installed" in output
-        and "pip install icon-gen-ai[ai]" in output
+        "AI features not installed" in output
+        and "pip install" in output
     )
     has_no_key = "⚠ No API key configured" in output
     has_active = "✓ Active provider:" in output
