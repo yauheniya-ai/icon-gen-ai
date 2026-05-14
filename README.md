@@ -41,7 +41,7 @@ Generate pixel-perfect icons from Iconify, direct URLs, and local files—with a
 - ![JavaScript](https://api.iconify.design/logos:javascript.svg?height=16) Javascript — component and API code
 
 **CLI**
-- ![Click](https://raw.githubusercontent.com/yauheniya-ai/icon-gen-ai/main/.github/.images/click.png) [Click](https://click.palletsprojects.com/en/stable/) — Python package for creating beautiful command line interfaces in a composable way
+- ![Typer](https://api.iconify.design/devicon:typer.svg?height=16) [Typer](https://typer.tiangolo.com/) — CLI based on standard Python type declarations
 
 **Packaging**
 - ![PyPI](https://api.iconify.design/devicon:pypi.svg?height=16) [PyPI](https://pypi.org/project/icon-gen-ai/) — distributed as an installable Python package
